@@ -20,8 +20,8 @@ const montserrat = Montserrat({
 
 // Default SEO metadata for all routes (can be overridden per page/segment).
 export const metadata: Metadata = {
-  title: 'Ginevra Zoe Giannelli — Photography',
-  description: 'Fotografia di moda, strada e natura. Uno sguardo concettuale sul reale.',
+  title: 'Ginevra Zoe Giannelli — Portfolio',
+  description: 'Portfolio di Ginevra Zoe Giannelli',
 }
 
 export default function RootLayout({
