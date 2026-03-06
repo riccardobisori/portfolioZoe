@@ -4,11 +4,11 @@ export default function About() {
     return (
         // id="about" per il link nella Nav
         // display grid diviso in due colonne uguali — immagine e testo
+        // Su mobile colonna singola, su desktop due colonne
         <section
             id="about"
-            style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
+            className="grid grid-cols-1 md:grid-cols-2"
+            style={{ 
                 minHeight: '70vh',
                 background: 'var(--ink)', // sfondo scuro — contrasto con il resto del sito
                 overflow: 'hidden',
@@ -16,12 +16,13 @@ export default function About() {
         >
 
             {/* ── COLONNA SINISTRA — immagine ── */}
-            <div style={{ position: 'relative', overflow: 'hidden' }}>
+            {/* Immagine — su mobile altezza fissa, su desktop altezza automatica */}
+            <div className="relative overflow-hidden h-72 md:h-auto">
                 {/*
-            Placeholder scuro — sarà sostituito con un ritratto di Ginevra.
-            Usiamo un gradiente più scuro rispetto agli altri placeholder
-            perché siamo su sfondo ink (quasi nero)
-          */}
+                    Placeholder scuro — sarà sostituito con un ritratto di Ginevra.
+                    Usiamo un gradiente più scuro rispetto agli altri placeholder
+                    perché siamo su sfondo ink (quasi nero)
+                */}
                 <div style={{
                     width: '100%',
                     height: '100%',
@@ -31,12 +32,8 @@ export default function About() {
             </div>
 
             {/* ── COLONNA DESTRA — testo ── */}
-            <div style={{
-                padding: '6rem 5rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center', // centra verticalmente il contenuto
-            }}>
+            {/* Testo — padding ridotto su mobile */}
+            <div className="flex flex-col justify-center px-8 py-16 md:px-20 md:py-24">
 
                 {/* Etichetta piccola sopra il titolo — stile editoriale */}
                 <p style={{
@@ -50,9 +47,9 @@ export default function About() {
                 </p>
 
                 {/* 
-            Titolo principale in serif — font grande e leggero su sfondo scuro
-            crea un effetto editoriale raffinato
-          */}
+                    Titolo principale in serif — font grande e leggero su sfondo scuro
+                    crea un effetto editoriale raffinato
+                */}
                 <h2 style={{
                     fontFamily: 'var(--font-cormorant)',
                     fontSize: 'clamp(1.8rem, 3vw, 2.8rem)',
@@ -85,17 +82,17 @@ export default function About() {
                     fuori campo. Ogni scatto è un&apos;interrogazione silenziosa.
                 </p>
                 {/*
-            Nota: &apos; è l'entità HTML per l'apostrofo.
-            In JSX le stringhe con apostrofi vanno escapate così
-            per evitare conflitti con la sintassi JSX
-          */}
+                    Nota: &apos; è l'entità HTML per l'apostrofo.
+                    In JSX le stringhe con apostrofi vanno escapate così
+                    per evitare conflitti con la sintassi JSX
+                */}
 
                 {/* Link "Leggi di più" con trattino animato */}
                 {/* 
-            Non usiamo Link di Next.js perché /about non esiste ancora.
-            Quando creeremo la pagina about, cambieremo questo in:
-            <Link href="/about">
-          */}
+                    Non usiamo Link di Next.js perché /about non esiste ancora.
+                    Quando creeremo la pagina about, cambieremo questo in:
+                    <Link href="/about">
+                */}
 
                 <a href="#"
                     style={{

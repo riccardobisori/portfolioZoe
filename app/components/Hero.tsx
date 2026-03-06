@@ -10,26 +10,13 @@ import Link from 'next/link'
 // In React, ogni componente è una funzione che descrive un pezzo di UI
 export default function Hero() {
     return (
-        // <section> è un tag HTML semantico — indica una sezione della pagina
-        // style={{}} è il modo React per scrivere CSS inline
-        // Le doppie graffe: la prima apre l'espressione JSX, la seconda apre l'oggetto JS
-        <section style={{
-            minHeight: '100vh',          // occupa almeno tutta l'altezza dello schermo
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr', // divide in due colonne uguali
-            position: 'relative',
-            overflow: 'hidden',
-        }}>
+        // min-h-screen = altezza minima 100vh
+        // grid grid-cols-1 md:grid-cols-2 = una colonna su mobile, due su desktop
+        <section className="min-h-screen grid grid-cols-1 md:grid-cols-2 relative overflow-hidden">
 
             {/* ── COLONNA SINISTRA — testo e titolo ── */}
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',     // impila gli elementi in verticale
-                justifyContent: 'flex-end',  // spinge il contenuto verso il basso
-                padding: '8rem 3rem 5rem',
-                position: 'relative',
-                zIndex: 2,
-            }}>
+            {/* justify-end = contenuto in basso, pt-32 su mobile per la nav fixed */}
+            <div className="flex flex-col justify-end pt-32 md:pt-0 px-6 md:px-12 pb-16 md:pb-20 relative z-10">
 
                 {/* Piccola etichetta sopra il titolo */}
                 <p style={{
@@ -101,11 +88,12 @@ export default function Hero() {
                 </Link>
             </div>
 
-            {/* ── COLONNA DESTRA — immagine hero ── */}
-            <div style={{
-                position: 'relative',
-                overflow: 'hidden',
-            }}>
+            {/* 
+                Colonna destra — immagine
+                h-64 su mobile = altezza fissa ridotta
+                md:h-auto = su desktop occupa tutta l'altezza disponibile
+            */}
+            <div className="relative overflow-hidden h-64 md:h-auto">
                 {/* Wrapper dell'immagine con animazione fadeIn */}
                 <div style={{
                     position: 'absolute',
@@ -139,8 +127,8 @@ export default function Hero() {
                 </div>
             </div>
 
-            {/* Numero decorativo in filigrana — puramente estetico */}
-            <div style={{
+            {/* Numero decorativo — nascosto su mobile */}
+            <div className="hidden md:block" style={{
                 position: 'absolute',
                 right: '3rem',
                 bottom: '5rem',

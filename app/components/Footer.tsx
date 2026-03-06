@@ -6,13 +6,9 @@ export default function Footer() {
         // id="contact" per il link nella Nav
         <footer
             id="contact"
-            style={{
-                borderTop: '1px solid rgba(26,24,20,0.1)',
-                padding: '3rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-            }}
+            // Su mobile impila verticalmente, su desktop affianca orizzontalmente
+            className="border-t px-6 md:px-12 py-8 flex flex-col md:flex-row justify-between items-center gap-6 md:gap-0"
+            style={{ borderColor: 'rgba(26,24,20,0.1)' }}
         >
 
             {/* Nome — serif corsivo, tenue */}
@@ -28,11 +24,7 @@ export default function Footer() {
 
             {/* Link social e contatti */}
             {/* Usiamo <a> normale perché sono link esterni */}
-            <ul style={{
-                display: 'flex',
-                gap: '2rem',
-                listStyle: 'none',
-            }}>
+            <ul className="flex gap-8 list-none">
                 {[
                     { label: 'Instagram', href: 'https://instagram.com' },
                     { label: 'Behance', href: 'https://behance.net' },
@@ -70,10 +62,10 @@ export default function Footer() {
                 © {new Date().getFullYear()}
             </span>
             {/*
-          new Date().getFullYear() restituisce l'anno corrente dinamicamente.
-          In un Server Component viene eseguito sul server a build time —
-          quindi l'anno si aggiorna automaticamente ad ogni deploy. 
-        */}
+                new Date().getFullYear() restituisce l'anno corrente dinamicamente.
+                In un Server Component viene eseguito sul server a build time —
+                quindi l'anno si aggiorna automaticamente ad ogni deploy. 
+                */}
 
         </footer>
     )

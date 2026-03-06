@@ -114,7 +114,7 @@ function CategoryCard({ category }: { category: Category }) {
 // ── COMPONENTE PRINCIPALE ──────────────────────────────────────────────────
 export default function Categories() {
     return (
-        <section id="categories" style={{ padding: '8rem 3rem' }}>
+        <section id="categories" className="px-6 md:px-12 py-20 md:py-32">
 
             {/* Header sezione */}
             <div style={{
@@ -146,17 +146,19 @@ export default function Categories() {
             </div>
 
             {/* 
-        Griglia a tre colonne separate da bordi sottili.
-        gap: 0 + background sul wrapper + border sul wrapper
-        crea l'effetto di linee divisorie tra le card
-      */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '1px',                              // gap di 1px = linea divisoria
-                background: 'rgba(26,24,20,0.1)',        // il background si vede nel gap
-                border: '1px solid rgba(26,24,20,0.1)',  // bordo esterno
-            }}>
+                Griglia a tre colonne separate da bordi sottili.
+                gap: 0 + background sul wrapper + border sul wrapper
+                crea l'effetto di linee divisorie tra le card
+            */}
+            {/* Su mobile una categoria per riga, su desktop tre affiancate */}
+            <div
+                className="grid grid-cols-1 md:grid-cols-3"
+                style={{
+                    gap: '1px',
+                    background: 'rgba(26,24,20,0.1)',
+                    border: '1px solid rgba(26,24,20,0.1)',
+                }}
+            >
                 {categories.map((category) => (
                     <CategoryCard key={category.number} category={category} />
                 ))}

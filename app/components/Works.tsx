@@ -241,7 +241,7 @@ export default function Works() {
 
     return (
         // id="works" permette alla Nav di scrollare qui con href="#works"
-        <section id="works" style={{ padding: '8rem 3rem' }}>
+        <section id="works" className="px-6 md:px-12 py-20 md:py-32">
 
             {/* Header della sezione */}
             <div
@@ -286,15 +286,10 @@ export default function Works() {
             </div>
 
             {/* 
-        Griglia asimmetrica — il primo elemento occupa 2 righe (isLarge)
-        grid-template-columns: 1.6fr 1fr 1fr = prima colonna più larga
-      */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1.6fr 1fr 1fr',
-                gridTemplateRows: 'auto auto',
-                gap: '1.5rem',
-            }}>
+            Griglia asimmetrica — il primo elemento occupa 2 righe (isLarge)
+            grid-template-columns: 1.6fr 1fr 1fr = prima colonna più larga
+            */}
+            <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-6">
                 {works.map((work, index) => (
                     // Il primo elemento (index === 0) è quello grande a sinistra
                     <WorkCard
