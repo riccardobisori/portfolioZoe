@@ -28,7 +28,7 @@ body {
      because a custom cursor will be rendered via React */
   background: var(--cream);
   color: var(--ink);
-  cursor: none;
+  /* cursor: none; */
   overflow-x: hidden;
 }
 

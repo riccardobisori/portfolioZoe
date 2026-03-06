@@ -2,6 +2,8 @@ import Nav from './components/Nav'
 import Hero from './components/Hero'
 import Marquee from './components/Marquee'
 import Works from './components/Works'
+import About from './components/About'
+import Categories from './components/Categories'
 
 export default function Home() {
   return (
@@ -10,6 +12,8 @@ export default function Home() {
       <Hero />
       <Marquee />
       <Works />
+      <About />
+      <Categories />
     </main>
   )
 }
