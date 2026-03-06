@@ -6,44 +6,45 @@ import Link from 'next/link'
 // and anchor links that smooth-scroll to sections on the page.
 export default function Nav() {
     return (
-        <nav style={{
-            //position: 'fixed',
-            //top: 0, left: 0, right: 0,
-            zIndex: 50,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            padding: '2.5rem 3rem',
-        }}>
+        // fixed = posizione fissa in alto
+        // top-0 left-0 right-0 = occupa tutta la larghezza
+        // flex justify-between = logo a sinistra, link a destra
+        // px-6 md:px-12 = padding orizzontale: piccolo su mobile, grande su desktop
+        // py-6 md:py-10 = padding verticale: piccolo su mobile, grande su desktop
+        <nav className='fixed top-0 left-0 right-0 z-50 flex justify-between items-start px-6 md:px-12 py-6 md:py-10'>
+
             {/* Brand lockup: name + photography tag, using the serif display font */}
-            <Link href="/" style={{
-                fontFamily: 'var(--font-cormorant)',
-                fontWeight: 300,
-                fontSize: '1rem',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase' as const,
-                lineHeight: 1.4,
-                color: 'var(--ink)',
-                textDecoration: 'none',
-            }}>
-                Ginevra Zoe Giannelli
+            <Link href="/" className="no-underline">
                 <span style={{
-                    display: 'block',
-                    fontStyle: 'italic',
-                    fontSize: '0.75rem',
-                    letterSpacing: '0.35em',
-                    color: 'var(--dust)',
+                    fontFamily: 'var(--font-cormorant)',
+                    fontWeight: 300,
+                    fontSize: '1rem',
+                    letterSpacing: '0.2em',
+                    textTransform: 'uppercase' as const,
+                    lineHeight: 1.4,
+                    color: 'var(--ink)',
+                    textDecoration: 'none',
                 }}>
-                    Photography
+                    Ginevra Zoe Giannelli
+                    <span style={{
+                        display: 'block',
+                        fontStyle: 'italic',
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.35em',
+                        color: 'var(--dust)',
+                    }}>
+                        Photography
+                    </span>
                 </span>
             </Link>
 
-            <ul style={{
-                // Horizontal list of navigation items aligned with the brand.
-                display: 'flex',
-                gap: '2.5rem',
-                listStyle: 'none',
-            }}>
+            {/* 
+                hidden md:flex = nascosto su mobile, visibile da tablet in su.
+                Su mobile i link di navigazione spariscono — 
+                in futuro aggiungeremo un menu hamburger
+            */}
+            <ul className="hidden md:flex gap-10 list-none">
+
                 {[
                     { label: 'Works', href: '#works' },
                     { label: 'About', href: '#about' },
