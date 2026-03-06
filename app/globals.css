@@ -87,3 +87,8 @@ body::before {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Footer link hover — gestito in CSS perché Footer è Server Component */
+footer a:hover {
+  color: var(--ink) !important;
+}
