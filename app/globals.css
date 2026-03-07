@@ -24,11 +24,9 @@ html {
 }
 
 body {
-  /* Soft background, high-contrast text, and no default cursor
-     because a custom cursor will be rendered via React */
+  /* Soft background, high-contrast text */
   background: var(--cream);
   color: var(--ink);
-  /* cursor: none; */
   overflow-x: hidden;
 }
 

@@ -18,7 +18,7 @@ export default function Home() {
         invece di un singolo oggetto  
       */}
       <Cursors />
-      <main>
+      <main style={{ cursor: 'none' }}>
         <Nav />
         <Hero />
         <Marquee />
