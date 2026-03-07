@@ -65,21 +65,22 @@ export default function Cursor() {
 
     // Dimensione del quadrato in base allo stato
     // normale → hover (si ingrandisce) → click (si rimpicciolisce di scatto)
-    const size = clicked ? 16 : hovered ? 48 : 32
+    const sizeSquare = clicked ? 16 : hovered ? 48 : 32
+    const sizePoint = hovered ? 8 : 3
 
     return (
         <>
             {/*
-        Punto fisso — segue il mouse istantaneamente.
-        È il "vero" cursore, preciso e puntuale.
-        Piccolo e discreto — non distrae.
-      */}
+                Punto fisso — segue il mouse istantaneamente.
+                È il "vero" cursore, preciso e puntuale.
+                Piccolo e discreto — non distrae.
+            */}
             <div style={{
                 position: 'fixed',
                 left: mouse.x,
                 top: mouse.y,
-                width: '3px',
-                height: '3px',
+                width: `${sizePoint}px`,
+                height: `${sizePoint}px`,
                 background: 'white',
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',
@@ -90,19 +91,19 @@ export default function Cursor() {
             }} />
 
             {/*
-        Quadrato vuoto — segue con ritardo (lerp).
-        Niente border-radius — geometria Bauhaus pura.
-        Al hover si ingrandisce per "inquadrare" l'elemento.
-        Al click si contrae di scatto — feedback immediato.
-        mixBlendMode: difference = si inverte automaticamente
-        su sfondi chiari e scuri, zero logica JS per il colore.
-      */}
+                Quadrato vuoto — segue con ritardo (lerp).
+                Niente border-radius — geometria Bauhaus pura.
+                Al hover si ingrandisce per "inquadrare" l'elemento.
+                Al click si contrae di scatto — feedback immediato.
+                mixBlendMode: difference = si inverte automaticamente
+                su sfondi chiari e scuri, zero logica JS per il colore.
+            */}
             <div style={{
                 position: 'fixed',
                 left: square.x,
                 top: square.y,
-                width: `${size}px`,
-                height: `${size}px`,
+                width: `${sizeSquare}px`,
+                height: `${sizeSquare}px`,
                 border: '1px solid white',
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',

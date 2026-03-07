@@ -135,7 +135,7 @@ export default function Hero({ heroImage }: HeroProps) {
                     opacity: 0,
                     animation: 'fadeUp 0.9s ease 0.5s forwards',
                 }}>
-                    PINO<br />
+                    Visual<br />
                     {/* 
                         'Works' in corsivo — rompe la rigidità Bauhaus con un gesto
                         calligrafico. Tensione tra geometrico e organico.
@@ -145,7 +145,7 @@ export default function Hero({ heroImage }: HeroProps) {
                         fontWeight: 300,
                         color: 'rgba(255,255,255,0.75)',
                     }}>
-                        BRUNO
+                        Works
                     </em>
                 </h1>
 
