@@ -1,147 +1,221 @@
-// 'use client' dice a Next.js che questo componente gira nel browser
-// (necessario perché usiamo animazioni CSS e interazioni utente)
-// Senza questa direttiva, Next.js eseguirebbe il componente solo sul server
 'use client'
 
-// Importiamo Link di Next.js per la navigazione interna
 import Link from 'next/link'
+import Image from 'next/image'
+import { urlFor } from '@/sanity/lib/image'
 
-// Definiamo il componente Hero come funzione che restituisce JSX
-// In React, ogni componente è una funzione che descrive un pezzo di UI
-export default function Hero() {
+interface HeroProps {
+    heroImage: any | null
+}
+
+export default function Hero({ heroImage }: HeroProps) {
+    // Costruiamo l'URL dell'immagine se esiste
+    // width(1920) = risoluzione massima per schermi grandi
+    // quality(90) = qualità alta ma non massima, bilancia peso e qualità
+    const imageUrl = heroImage
+        ? urlFor(heroImage).width(1920).height(1080).quality(90).url()
+        : null
+
     return (
-        // min-h-screen = altezza minima 100vh
-        // grid grid-cols-1 md:grid-cols-2 = una colonna su mobile, due su desktop
-        <section className="min-h-screen grid grid-cols-1 md:grid-cols-2 relative overflow-hidden">
+        // Sezione a tutto schermo — position relative per contenere
+        // l'immagine assoluta e il testo sovrapposto
+        <section style={{
+            position: 'relative',
+            width: '100%',
+            height: '100vh',
+            overflow: 'hidden',
+            background: '#111', // fallback mentre l'immagine carica
+        }}>
 
-            {/* ── COLONNA SINISTRA — testo e titolo ── */}
-            {/* justify-end = contenuto in basso, pt-32 su mobile per la nav fixed */}
-            <div className="flex flex-col justify-end pt-32 md:pt-0 px-6 md:px-12 pb-16 md:pb-20 relative z-10">
-
-                {/* Piccola etichetta sopra il titolo */}
-                <p style={{
-                    fontSize: '0.6rem',
-                    letterSpacing: '0.4em',
-                    textTransform: 'uppercase',
-                    color: 'var(--dust)',       // usa la variabile CSS definita in globals.css
-                    marginBottom: '2rem',
-                    // Animazione CSS: parte invisibile e sale dal basso
-                    // opacity 0 → 1, translateY 24px → 0
-                    opacity: 0,
-                    animation: 'fadeUp 1s ease 0.3s forwards', // forwards = mantieni stato finale
-                }}>
-                    Portfolio — Firenze, Italia
-                </p>
-
-                {/* Titolo principale */}
-                {/* clamp(min, preferito, max) = dimensione fluida che si adatta allo schermo */}
-                <h1 style={{
-                    fontFamily: 'var(--font-cormorant)', // serif elegante definito in layout.tsx
-                    fontWeight: 300,
-                    fontSize: 'clamp(3.5rem, 6vw, 7rem)', // responsive: cresce con la larghezza
-                    lineHeight: 0.95,
-                    letterSpacing: '-0.02em',
-                    color: 'var(--ink)',
-                    opacity: 0,
-                    animation: 'fadeUp 1s ease 0.5s forwards', // ritardo 0.5s — dopo l'eyebrow
-                }}>
-                    Forme<br />
-                    {/* <em> = corsivo semantico — qui usiamo per il contrasto visivo */}
-                    <em style={{ fontStyle: 'italic', color: 'var(--dust)' }}>e silenzi</em><br />
-                    visivi
-                </h1>
-
-                {/* Breve descrizione */}
-                <p style={{
-                    marginTop: '2.5rem',
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.15em',
-                    lineHeight: 2,
-                    color: 'var(--dust)',
-                    maxWidth: '28ch', // 'ch' = larghezza del carattere '0' — limita a ~28 caratteri
-                    opacity: 0,
-                    animation: 'fadeUp 1s ease 0.8s forwards',
-                }}>
-                    Fotografia di moda, strada e natura.<br />
-                    Uno sguardo concettuale sul reale.
-                </p>
-
-                {/* Call to action — link che scorre verso la sezione Works */}
-                {/* Il trattino animato è creato con ::after in CSS puro */}
-                <Link
-                    href="#works"
+            {/* ── IMMAGINE A TUTTO SCHERMO ── */}
+            {imageUrl ? (
+                <Image
+                    src={imageUrl}
+                    alt="Ginevra Zoe Giannelli"
+                    fill
+                    // priority = carica subito, è above the fold
+                    // senza priority Next.js la carica in lazy — vedremmo un flash nero
+                    priority
                     style={{
-                        marginTop: '3.5rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        fontSize: '0.6rem',
-                        letterSpacing: '0.35em',
-                        textTransform: 'uppercase',
-                        color: 'var(--ink)',
-                        textDecoration: 'none',
+                        objectFit: 'cover',
+                        objectPosition: 'center',
+                        // Animazione fadeIn — l'immagine appare dolcemente
                         opacity: 0,
-                        animation: 'fadeUp 1s ease 1s forwards',
+                        animation: 'fadeIn 1.4s ease 0.1s forwards',
                     }}
-                >
-                    Scopri i lavori
-                </Link>
-            </div>
-
-            {/* 
-                Colonna destra — immagine
-                h-64 su mobile = altezza fissa ridotta
-                md:h-auto = su desktop occupa tutta l'altezza disponibile
-            */}
-            <div className="relative overflow-hidden h-64 md:h-auto">
-                {/* Wrapper dell'immagine con animazione fadeIn */}
+                />
+            ) : (
+                // Fallback se non c'è immagine su Sanity
                 <div style={{
                     position: 'absolute',
-                    inset: 0,               // shorthand per top/right/bottom/left: 0
-                    opacity: 0,
-                    animation: 'fadeIn 1.5s ease 0.2s forwards',
-                }}>
-                    {/* 
-            Placeholder grigio — verrà sostituito con una vera <img> o 
-            il componente <Image> di Next.js quando avremo le foto di Ginevra.
-            Il gradiente simula una foto in bianco e nero.
-          */}
-                    <div style={{
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(160deg, #d4cfc8 0%, #b8b0a5 40%, #8a8278 100%)',
-                        position: 'relative',
-                    }}>
-                        {/* Etichetta sovrapposta all'immagine, stile editoriale */}
-                        <span style={{
-                            position: 'absolute',
-                            bottom: '2rem',
-                            left: '2rem',
-                            fontSize: '0.55rem',
-                            letterSpacing: '0.4em',
-                            color: 'rgba(255,255,255,0.5)',
-                        }}>
-                            FASHION / 2024
-                        </span>
-                    </div>
-                </div>
-            </div>
+                    inset: 0,
+                    background: 'linear-gradient(145deg, #2a2a2a 0%, #111 60%, #000 100%)',
+                }} />
+            )}
 
-            {/* Numero decorativo — nascosto su mobile */}
-            <div className="hidden md:block" style={{
+            {/* Overlay scuro graduato dal basso — rende il testo leggibile
+          senza schiacciare l'immagine sopra */}
+            <div style={{
                 position: 'absolute',
-                right: '3rem',
-                bottom: '5rem',
-                fontFamily: 'var(--font-cormorant)',
-                fontSize: '8rem',
-                fontWeight: 300,
-                // rgba con alpha molto bassa = quasi invisibile, solo un accenno
-                color: 'rgba(26,24,20,0.06)',
-                lineHeight: 1,
+                inset: 0,
+                background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%)',
                 zIndex: 1,
-                pointerEvents: 'none', // non intercetta click del mouse
+            }} />
+
+            {/* ── ELEMENTO GEOMETRICO BAUHAUS ── */}
+            {/* Rettangolo vuoto — cornice geometrica, non riempito
+          Bauhaus usa la geometria come struttura, non come decorazione */}
+            <div
+                className="hidden md:block"
+                style={{
+                    position: 'absolute',
+                    top: '18%',
+                    right: '10%',
+                    width: '120px',
+                    height: '120px',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    zIndex: 2,
+                    opacity: 0,
+                    animation: 'fadeIn 1.2s ease 0.8s forwards',
+                }}
+            />
+
+            {/* Linea orizzontale sottile — divide lo spazio, principio Bauhaus */}
+            <div
+                className="hidden md:block"
+                style={{
+                    position: 'absolute',
+                    left: '6%',
+                    right: '6%',
+                    bottom: '22%',
+                    height: '1px',
+                    background: 'rgba(255,255,255,0.15)',
+                    zIndex: 2,
+                    opacity: 0,
+                    animation: 'fadeIn 1s ease 1s forwards',
+                }}
+            />
+
+            {/* ── CONTENUTO TESTUALE ── */}
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end', // testo ancorato in basso
+                padding: 'clamp(2rem, 6vw, 5rem)',
+                paddingBottom: 'clamp(3rem, 8vw, 6rem)',
             }}>
-                01
+
+                {/* Nome completo — piccolo, discreto, sopra il titolo */}
+                <p style={{
+                    fontSize: '0.58rem',
+                    letterSpacing: '0.45em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(255,255,255,0.5)',
+                    marginBottom: '1.25rem',
+                    opacity: 0,
+                    animation: 'fadeUp 0.9s ease 0.3s forwards',
+                }}>
+                    Ginevra Zoe Giannelli
+                </p>
+
+                {/* Titolo principale — grande, bold, Bauhaus */}
+                {/* Cormorant Garamond in uppercase perde il carattere serif
+                e diventa geometrico — perfetto per Bauhaus */}
+                <h1 style={{
+                    fontFamily: 'var(--font-cormorant)',
+                    fontSize: 'clamp(3.5rem, 9vw, 9rem)',
+                    fontWeight: 300,
+                    letterSpacing: '0.08em',
+                    lineHeight: 0.9,
+                    color: 'white',
+                    textTransform: 'uppercase',
+                    opacity: 0,
+                    animation: 'fadeUp 0.9s ease 0.5s forwards',
+                }}>
+                    PINO<br />
+                    {/* 
+                        'Works' in corsivo — rompe la rigidità Bauhaus con un gesto
+                        calligrafico. Tensione tra geometrico e organico.
+                    */}
+                    <em style={{
+                        fontStyle: 'italic',
+                        fontWeight: 300,
+                        color: 'rgba(255,255,255,0.75)',
+                    }}>
+                        BRUNO
+                    </em>
+                </h1>
+
+                {/* Riga inferiore — categorie + CTA affiancati */}
+                <div style={{
+                    marginTop: '3rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1.5rem',
+                    opacity: 0,
+                    animation: 'fadeUp 0.9s ease 0.8s forwards',
+                }}>
+
+                    {/* Categorie — testo piccolo, come caption editoriale */}
+                    <p style={{
+                        fontSize: '0.58rem',
+                        letterSpacing: '0.3em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.45)',
+                    }}>
+                        Moda&nbsp;&nbsp;·&nbsp;&nbsp;Street&nbsp;&nbsp;·&nbsp;&nbsp;Ritratti&nbsp;&nbsp;·&nbsp;&nbsp;Paesaggio
+                    </p>
+
+                    {/* CTA — minimal, solo testo con freccia */}
+                    <Link
+                        href="#works"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            fontSize: '0.58rem',
+                            letterSpacing: '0.35em',
+                            textTransform: 'uppercase',
+                            color: 'white',
+                            textDecoration: 'none',
+                            transition: 'gap 0.3s ease',
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.gap = '1.6rem'
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.gap = '1rem'
+                        }}
+                    >
+                        Archivio
+                        {/* Freccia geometrica — linea + quadrato, puro Bauhaus */}
+                        <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                        }}>
+                            <span style={{
+                                display: 'block',
+                                width: '32px',
+                                height: '1px',
+                                background: 'white',
+                            }} />
+                            <span style={{
+                                display: 'block',
+                                width: '5px',
+                                height: '5px',
+                                border: '1px solid white',
+                                transform: 'rotate(45deg)',
+                            }} />
+                        </span>
+                    </Link>
+
+                </div>
             </div>
 
         </section>

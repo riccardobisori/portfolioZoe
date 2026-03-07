@@ -63,3 +63,13 @@ export const workBySlugQuery = groq`
     }
   }
 `
+
+// Query per le impostazioni globali del sito
+// [0] prende il primo (e unico) documento di tipo siteSettings
+export const siteSettingsQuery = groq`
+  *[_type == "siteSettings"][0] {
+    heroImage,
+    heroTitle,
+    heroSubtitle,
+  }
+`

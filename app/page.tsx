@@ -1,13 +1,17 @@
 import Nav from './components/Nav'
 import Hero from './components/Hero'
-import Marquee from './components/Marquee'
 import Works from './components/Works'
 import About from './components/About'
 import Categories from './components/Categories'
 import Footer from './components/Footer'
 import Cursors from './components/Cursors'
+import { client } from '@/sanity/lib/client'
+import { siteSettingsQuery } from '@/sanity/lib/queries'
 
-export default function Home() {
+export default async function Home() {
+  // Fetch parallelo — prende settings e works contemporaneamente
+  const settings = await client.fetch(siteSettingsQuery)
+
   return (
     <>
       {/* 
@@ -20,8 +24,8 @@ export default function Home() {
       <Cursors />
       <main style={{ cursor: 'none' }}>
         <Nav />
-        <Hero />
-        <Marquee />
+        {/* Passiamo l'immagine hero a Hero come prop */}
+        <Hero heroImage={settings?.heroImage ?? null} />
         <Works />
         <About />
         <Categories />

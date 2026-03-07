@@ -1,40 +1,27 @@
 'use client'
 
-// Il cursore custom richiede:
-// - useState per tracciare la posizione
-// - useEffect per aggiungere/rimuovere l'event listener sul mouse
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export default function Cursor() {
-    // Stato per la posizione del punto centrale (segue il mouse istantaneamente)
     const [mouse, setMouse] = useState({ x: 0, y: 0 })
-
-    // Stato per la posizione dell'anello (segue con ritardo — effetto lag)
-    const [ring, setRing] = useState({ x: 0, y: 0 })
-
-    // Stato per sapere se il mouse è sopra un elemento cliccabile
-    // true = cursore ingrandito, false = cursore normale
-    const [hovered, setHovered] = useState(false)
-
-    // Stato per nascondere il cursore quando esce dalla finestra
+    const [square, setSquare] = useState({ x: 0, y: 0 })
     const [visible, setVisible] = useState(false)
+    const [hovered, setHovered] = useState(false)
+    const [clicked, setClicked] = useState(false)
+    const animRef = useRef<number>(0)
 
     useEffect(() => {
-        // Aggiorna la posizione del punto centrale — istantaneo
         const onMouseMove = (e: MouseEvent) => {
             setMouse({ x: e.clientX, y: e.clientY })
             setVisible(true)
         }
-
-        // Nasconde il cursore quando esce dalla finestra
         const onMouseLeave = () => setVisible(false)
         const onMouseEnter = () => setVisible(true)
+        const onMouseDown = () => setClicked(true)
+        const onMouseUp = () => setClicked(false)
 
-        // Rileva quando il mouse è sopra elementi interattivi
-        // querySelectorAll prende tutti i link, bottoni e card
         const addHoverListeners = () => {
-            const targets = document.querySelectorAll('a, button, .work-item, .cat-item')
-            targets.forEach(el => {
+            document.querySelectorAll('a, button').forEach(el => {
                 el.addEventListener('mouseenter', () => setHovered(true))
                 el.addEventListener('mouseleave', () => setHovered(false))
             })
@@ -43,83 +30,88 @@ export default function Cursor() {
         window.addEventListener('mousemove', onMouseMove)
         document.addEventListener('mouseleave', onMouseLeave)
         document.addEventListener('mouseenter', onMouseEnter)
-
-        // Aspettiamo che il DOM sia pronto prima di aggiungere gli hover listener
-        // setTimeout 0 = esegui al prossimo tick, dopo il render
+        window.addEventListener('mousedown', onMouseDown)
+        window.addEventListener('mouseup', onMouseUp)
         const timer = setTimeout(addHoverListeners, 0)
 
-        // Cleanup — rimuoviamo tutti i listener quando il componente viene smontato
         return () => {
             window.removeEventListener('mousemove', onMouseMove)
             document.removeEventListener('mouseleave', onMouseLeave)
             document.removeEventListener('mouseenter', onMouseEnter)
+            window.removeEventListener('mousedown', onMouseDown)
+            window.removeEventListener('mouseup', onMouseUp)
             clearTimeout(timer)
         }
     }, [])
 
-    // Animazione dell'anello — segue il mouse con inerzia (lerp)
-    // lerp = linear interpolation: sposta l'anello del 12% verso il mouse ad ogni frame
+    // Animazione del quadrato con lerp — segue il mouse con inerzia
+    // La velocità di inseguimento è controllata dal fattore 0.08
+    // più basso = più lento e morbido, più alto = più reattivo
     useEffect(() => {
-        let animFrame: number
-
         const animate = () => {
-            // L'anello si avvicina al mouse del 12% ad ogni frame — crea il lag visivo
-            setRing(prev => ({
-                x: prev.x + (mouse.x - prev.x) * 0.12,
-                y: prev.y + (mouse.y - prev.y) * 0.12,
+            setSquare(prev => ({
+                x: prev.x + (mouse.x - prev.x) * 0.08,
+                y: prev.y + (mouse.y - prev.y) * 0.08,
             }))
-            // requestAnimationFrame = esegui al prossimo frame del browser (~60fps)
-            // come un loop ma sincronizzato con il refresh rate dello schermo
-            animFrame = requestAnimationFrame(animate)
+            animRef.current = requestAnimationFrame(animate)
         }
+        animRef.current = requestAnimationFrame(animate)
+        return () => cancelAnimationFrame(animRef.current)
+    }, [mouse])
 
-        animFrame = requestAnimationFrame(animate)
-
-        // Cleanup — fermiamo il loop quando il componente viene smontato
-        return () => cancelAnimationFrame(animFrame)
-    }, [mouse]) // ri-esegui quando mouse cambia posizione
-
-    // Su mobile non mostriamo il cursore custom
-    // (i dispositivi touch non hanno cursore)
-    // typeof window check necessario perché questo codice gira anche sul server
     if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) {
         return null
     }
 
+    // Dimensione del quadrato in base allo stato
+    // normale → hover (si ingrandisce) → click (si rimpicciolisce di scatto)
+    const size = clicked ? 16 : hovered ? 48 : 32
+
     return (
         <>
-            {/* Punto centrale — segue il mouse istantaneamente */}
+            {/*
+        Punto fisso — segue il mouse istantaneamente.
+        È il "vero" cursore, preciso e puntuale.
+        Piccolo e discreto — non distrae.
+      */}
             <div style={{
                 position: 'fixed',
                 left: mouse.x,
                 top: mouse.y,
-                width: hovered ? '14px' : '8px',
-                height: hovered ? '14px' : '8px',
-                background: 'var(--ink)',
-                borderRadius: '50%',
-                // translate(-50%, -50%) centra il punto sul cursore
+                width: '3px',
+                height: '3px',
+                background: 'white',
                 transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none', // non intercetta click — il click passa "attraverso"
+                pointerEvents: 'none',
                 zIndex: 9999,
-                // transition solo su width/height per l'effetto ingrandimento
-                transition: 'width 0.3s ease, height 0.3s ease, opacity 0.3s ease',
                 opacity: visible ? 1 : 0,
+                transition: 'opacity 0.2s ease',
+                mixBlendMode: 'difference',
             }} />
 
-            {/* Anello esterno — segue con ritardo (lerp) */}
+            {/*
+        Quadrato vuoto — segue con ritardo (lerp).
+        Niente border-radius — geometria Bauhaus pura.
+        Al hover si ingrandisce per "inquadrare" l'elemento.
+        Al click si contrae di scatto — feedback immediato.
+        mixBlendMode: difference = si inverte automaticamente
+        su sfondi chiari e scuri, zero logica JS per il colore.
+      */}
             <div style={{
                 position: 'fixed',
-                left: ring.x,
-                top: ring.y,
-                width: hovered ? '52px' : '36px',
-                height: hovered ? '52px' : '36px',
-                border: '1px solid var(--ink)',
-                borderRadius: '50%',
+                left: square.x,
+                top: square.y,
+                width: `${size}px`,
+                height: `${size}px`,
+                border: '1px solid white',
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',
                 zIndex: 9998,
-                transition: 'width 0.3s ease, height 0.3s ease, opacity 0.3s ease',
-                opacity: visible ? 0.5 : 0,
+                opacity: visible ? 0.8 : 0,
+                // Transizione solo su size e opacity — il lag è gestito dal lerp
+                // non da CSS transition, altrimenti i due si sovrappongono
+                transition: 'width 0.12s ease, height 0.12s ease, opacity 0.2s ease',
+                mixBlendMode: 'difference',
             }} />
         </>
     )

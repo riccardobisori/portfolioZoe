@@ -41,6 +41,14 @@ body::before {
   opacity: 0.4;
 }
 
+/* Nasconde il cursore di default su tutti gli elementi interattivi
+   così non dobbiamo ricordarci di aggiungere cursor: none ovunque */
+a,
+button,
+[role="button"] {
+  cursor: none;
+}
+
 /* Reusable motion primitives */
 @keyframes fadeUp {
   from {
