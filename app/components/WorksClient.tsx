@@ -142,7 +142,6 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
             style={{
                 padding: '10px',
                 paddingTop: '80px',
-                scrollSnapAlign: 'start',
             }}
         >
             <div

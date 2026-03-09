@@ -24,12 +24,6 @@ const brunoAceSC = Bruno_Ace_SC({
   variable: '--font-brunoaceSC',
 })
 
-const googleSansCode = Google_Sans_Code({
-  subsets: ['latin'],
-  weight: ['300', '400'],
-  variable: '--font-googlesanscode'
-})
-
 // Default SEO metadata for all routes (can be overridden per page/segment).
 export const metadata: Metadata = {
   title: 'Ginevra Zoe Giannelli — Photography',
@@ -44,7 +38,7 @@ export default function RootLayout({
   return (
     // Root HTML wrapper for the whole app.
     // We attach font variables on `<html>` so they’re available globally.
-    <html lang="it" className={`${cormorant.variable} ${montserrat.variable} ${brunoAceSC.variable} ${googleSansCode.variable}`}>
+    <html lang="it" className={`${cormorant.variable} ${montserrat.variable} ${brunoAceSC.variable}`}>
       {/* Inline font-family ensures a sane default without depending on component-level styles. */}
       <body style={{ fontFamily: 'var(--font-montserrat), sans-serif' }}>
         {children}
