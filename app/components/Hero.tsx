@@ -24,7 +24,7 @@ export default function Hero({ heroImage }: HeroProps) {
             width: '100%',
             height: '100vh',
             overflow: 'hidden',
-            background: '#111', // fallback mentre l'immagine carica
+            scrollSnapAlign: 'start',
         }}>
 
             {/* ── IMMAGINE A TUTTO SCHERMO ── */}
