@@ -72,16 +72,6 @@ button,
   }
 }
 
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 /* Scroll-reveal helper classes toggled via IntersectionObserver */
 .reveal {
   opacity: 0;

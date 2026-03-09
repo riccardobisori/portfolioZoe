@@ -54,7 +54,7 @@ export default function Hero({ heroImage }: HeroProps) {
             )}
 
             {/* Overlay scuro graduato dal basso — rende il testo leggibile
-          senza schiacciare l'immagine sopra */}
+                senza schiacciare l'immagine sopra */}
             <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -64,7 +64,7 @@ export default function Hero({ heroImage }: HeroProps) {
 
             {/* ── ELEMENTO GEOMETRICO BAUHAUS ── */}
             {/* Rettangolo vuoto — cornice geometrica, non riempito
-          Bauhaus usa la geometria come struttura, non come decorazione */}
+                Bauhaus usa la geometria come struttura, non come decorazione */}
             <div
                 className="hidden md:block"
                 style={{
@@ -73,26 +73,10 @@ export default function Hero({ heroImage }: HeroProps) {
                     right: '10%',
                     width: '120px',
                     height: '120px',
-                    border: '1px solid rgba(255,255,255,0.25)',
+                    border: '2px solid rgba(255,255,255,0.25)',
                     zIndex: 2,
                     opacity: 0,
                     animation: 'fadeIn 1.2s ease 0.8s forwards',
-                }}
-            />
-
-            {/* Linea orizzontale sottile — divide lo spazio, principio Bauhaus */}
-            <div
-                className="hidden md:block"
-                style={{
-                    position: 'absolute',
-                    left: '6%',
-                    right: '6%',
-                    bottom: '22%',
-                    height: '1px',
-                    background: 'rgba(255,255,255,0.15)',
-                    zIndex: 2,
-                    opacity: 0,
-                    animation: 'fadeIn 1s ease 1s forwards',
                 }}
             />
 
@@ -125,29 +109,43 @@ export default function Hero({ heroImage }: HeroProps) {
                 {/* Cormorant Garamond in uppercase perde il carattere serif
                 e diventa geometrico — perfetto per Bauhaus */}
                 <h1 style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    fontSize: 'clamp(3.5rem, 9vw, 9rem)',
-                    fontWeight: 300,
-                    letterSpacing: '0.08em',
-                    lineHeight: 0.9,
+                    fontSize: 'clamp(3.5rem, 6vw, 7rem)',
+                    fontWeight: 400,
+                    letterSpacing: '0.05em',
+                    lineHeight: 1.05,
                     color: 'white',
                     textTransform: 'uppercase',
-                    opacity: 0,
-                    animation: 'fadeUp 0.9s ease 0.5s forwards',
+                    opacity: 0.2,
+                    animation: 'fadeUp 0.9s ease 0.5s forwards'
                 }}>
                     Visual<br />
                     {/* 
                         'Works' in corsivo — rompe la rigidità Bauhaus con un gesto
                         calligrafico. Tensione tra geometrico e organico.
                     */}
-                    <em style={{
-                        fontStyle: 'italic',
-                        fontWeight: 300,
+                    <span style={{
+                        fontWeight: 400,
+                        letterSpacing: '0.003em',
                         color: 'rgba(255,255,255,0.75)',
                     }}>
                         Works
-                    </em>
+                    </span>
                 </h1>
+
+                {/* Linea orizzontale sottile */}
+                <div
+                    className="hidden md:block"
+                    style={{
+                        left: '6%',
+                        right: '6%',
+                        height: '2px',
+                        background: 'rgba(255,255,255,0.15)',
+                        zIndex: 2,
+                        opacity: 0,
+                        animation: 'fadeIn 1s ease 1s forwards',
+                        marginTop: 0, // elimina margine extra sopra la linea
+                    }}
+                />
 
                 {/* Riga inferiore — categorie + CTA affiancati */}
                 <div style={{
