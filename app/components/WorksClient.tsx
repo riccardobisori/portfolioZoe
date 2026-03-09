@@ -1,58 +1,26 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
-import { SanityWork } from './Works'
+import type { SanityWork } from './Works'
 
-// Estendiamo il tipo SanityWork aggiungendo imageUrl
 interface WorkWithUrl extends SanityWork {
     imageUrl: string | null
+    isLandscape?: boolean
 }
 
-// ── HOVER OVERLAY ─────────────────────────────────────────────────────────
-function HoverOverlay() {
-    const [hovered, setHovered] = useState(false)
-
-    return (
-        <div
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'var(--ink)',
-                opacity: hovered ? 0.15 : 0,
-                transition: 'opacity 0.4s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 2,
-            }}
-        >
-            <span style={{
-                fontSize: '0.6rem',
-                letterSpacing: '0.4em',
-                textTransform: 'uppercase',
-                color: 'white',
-                opacity: hovered ? 1 : 0,
-                transform: hovered ? 'translateY(0)' : 'translateY(8px)',
-                transition: 'all 0.4s ease 0.1s',
-            }}>
-                Visualizza
-            </span>
-        </div>
-    )
-}
-
-// ── WORK CARD ─────────────────────────────────────────────────────────────
-function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: boolean }) {
+// ── SINGOLA CARD MASONRY ──────────────────────────────────────────────────
+function MasonryCard({ work }: { work: WorkWithUrl }) {
     const cardRef = useRef<HTMLAnchorElement>(null)
+    const contentRef = useRef<HTMLDivElement>(null)
+    const [hovered, setHovered] = useState(false)
+    const [isLandscape, setIsLandscape] = useState(work.isLandscape || false)
+    const [rowSpan, setRowSpan] = useState(200) // Default fallback prima del caricamento
 
+    // Scroll-reveal: la card appare quando entra nel viewport
     useEffect(() => {
         const el = cardRef.current
         if (!el) return
-
         const observer = new IntersectionObserver(
             ([entry]) => {
                 if (entry.isIntersecting) {
@@ -60,11 +28,27 @@ function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: bool
                     observer.unobserve(el)
                 }
             },
-            { threshold: 0.1 }
+            { threshold: 0.08 }
         )
-
         observer.observe(el)
         return () => observer.disconnect()
+    }, [])
+
+    // Calcola dinamicamente l'altezza in righe (grid-auto-rows: 1px)
+    useEffect(() => {
+        if (!contentRef.current) return
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (let entry of entries) {
+                // Calcoliamo l'altezza reale del contenuto
+                const height = entry.target.getBoundingClientRect().height
+                // Aggiungiamo 12 per il gap verticale (visto che columnGap è 12px)
+                setRowSpan(Math.ceil(height) + 12)
+            }
+        })
+
+        resizeObserver.observe(contentRef.current)
+        return () => resizeObserver.disconnect()
     }, [])
 
     return (
@@ -73,71 +57,76 @@ function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: bool
             href={`/works/${work.slug.current}`}
             className="reveal"
             style={{
-                gridRow: isLarge ? 'span 2' : 'span 1',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'none',
                 display: 'block',
+                position: 'relative',
+                cursor: 'none',
                 textDecoration: 'none',
                 color: 'inherit',
+                // Occupa 2 colonne se orizzontale, 1 se verticale
+                gridColumn: isLandscape ? 'span 2' : 'span 1',
+                // Occupa tante righe (da 1px) quanta è l'altezza reale + gap
+                gridRowEnd: `span ${rowSpan}`,
             }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
         >
-            <div style={{
-                width: '100%',
-                aspectRatio: isLarge ? 'unset' : '3/4',
-                height: isLarge ? '100%' : 'auto',
-                position: 'relative',
-                overflow: 'hidden',
-                minHeight: '260px',
-            }}>
-                {work.imageUrl ? (
-                    // Componente Image di Next.js — ottimizza automaticamente
-                    // le immagini: WebP, lazy loading, dimensioni responsive
-                    <Image
+            <div ref={contentRef} style={{ position: 'relative', overflow: 'hidden' }}>
+                {work.imageUrl && (
+                    <img
                         src={work.imageUrl}
                         alt={work.title}
-                        fill                    // riempie il contenitore padre
-                        style={{ objectFit: 'cover' }}  // come background-size: cover
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                    // sizes dice al browser quanto è grande l'immagine
-                    // in base alla larghezza dello schermo — ottimizza il download
+                        onLoad={(e) => {
+                            const img = e.target as HTMLImageElement
+                            setIsLandscape(img.naturalWidth > img.naturalHeight)
+                        }}
+                        style={{
+                            width: '100%',
+                            height: 'auto',
+                            display: 'block',
+                            transform: hovered ? 'scale(1.03)' : 'scale(1)',
+                            transition: 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)'
+                        }}
                     />
-                ) : (
-                    // Fallback se non c'è immagine
-                    <div style={{
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(135deg, #c5bdb4, #9e968e)',
-                    }} />
                 )}
 
-                <HoverOverlay />
-            </div>
-
-            {/* Info sotto la foto */}
-            <div style={{
-                padding: '1rem 0 0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-            }}>
-                <span style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    fontSize: '1rem',
-                    fontWeight: 300,
-                    fontStyle: 'italic',
-                    color: 'var(--ink)',
+                {/* Overlay hover */}
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'rgba(26,24,20,0.5)',
+                    opacity: hovered ? 1 : 0,
+                    transition: 'opacity 0.4s ease',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
                 }}>
-                    {work.title}
-                </span>
-                <span style={{
-                    fontSize: '0.55rem',
-                    letterSpacing: '0.3em',
-                    textTransform: 'uppercase',
-                    color: 'var(--dust)',
-                }}>
-                    {work.category?.title} · {work.year}
-                </span>
+                    <span style={{
+                        fontFamily: 'var(--font-brunoaceSC)',
+                        fontSize: 'clamp(1.5rem, 2.5vw, 2.5rem)',
+                        fontWeight: 400,
+                        fontStyle: 'italic',
+                        color: 'var(--cream)',
+                        letterSpacing: '0.01em',
+                        opacity: hovered ? 1 : 0,
+                        transform: hovered ? 'translateY(0)' : 'translateY(10px)',
+                        transition: 'opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s',
+                    }}>
+                        {work.category?.title}
+                    </span>
+                    <span style={{
+                        fontSize: '0.48rem',
+                        letterSpacing: '0.4em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(244,240,235,0.55)',
+                        opacity: hovered ? 1 : 0,
+                        transform: hovered ? 'translateY(0)' : 'translateY(6px)',
+                        transition: 'opacity 0.35s ease 0.1s, transform 0.35s ease 0.1s',
+                    }}>
+                        {work.title}
+                    </span>
+                </div>
             </div>
         </Link>
     )
@@ -145,85 +134,34 @@ function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: bool
 
 // ── COMPONENTE PRINCIPALE ─────────────────────────────────────────────────
 export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
-    const headerRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        const el = headerRef.current
-        if (!el) return
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    el.classList.add('visible')
-                    observer.unobserve(el)
-                }
-            },
-            { threshold: 0.1 }
-        )
-
-        observer.observe(el)
-        return () => observer.disconnect()
-    }, [])
+    if (works.length === 0) return null
 
     return (
-        <section id="works" className="px-6 md:px-12 py-20 md:py-32">
-
+        <section
+            id="works"
+            style={{
+                padding: '10px',
+                paddingTop: '80px',
+            }}
+        >
             <div
-                ref={headerRef}
-                className="reveal"
                 style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'baseline',
-                    marginBottom: '4rem',
-                    borderBottom: '1px solid rgba(26,24,20,0.1)',
-                    paddingBottom: '1.5rem',
+                    maxWidth: '1200px',
+                    margin: '0 auto',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    // riga base di 1px, in questo modo lo span equivale ai pixel in altezza!
+                    gridAutoRows: '1px',
+                    // l'algoritmo 'dense' riempie gli spazi vuoti lasciati dalle altezze sfalsate
+                    gridAutoFlow: 'dense',
+                    columnGap: '12px',
+                    // non usiamo gap o rowGap verticalmente perché usiamo lo span per lo spazio
                 }}
             >
-                <span style={{
-                    fontSize: '0.6rem',
-                    letterSpacing: '0.35em',
-                    textTransform: 'uppercase',
-                    color: 'var(--dust)',
-                }}>
-                    Selected Works
-                </span>
-                <h2 style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    fontSize: '2.5rem',
-                    fontWeight: 300,
-                    fontStyle: 'italic',
-                    color: 'var(--ink)',
-                }}>
-                    Ultimi lavori
-                </h2>
-                <span style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    fontSize: '0.85rem',
-                    color: 'var(--dust)',
-                    letterSpacing: '0.1em',
-                }}>
-                    2023 — 2024
-                </span>
+                {works.map(work => (
+                    <MasonryCard key={work._id} work={work} />
+                ))}
             </div>
-
-            {/* Se non ci sono lavori in evidenza mostra un messaggio */}
-            {works.length === 0 ? (
-                <p style={{ color: 'var(--dust)', fontSize: '0.8rem' }}>
-                    Nessun lavoro in evidenza — aggiungine uno dallo Studio Sanity.
-                </p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-6">
-                    {works.map((work, index) => (
-                        <WorkCard
-                            key={work._id}
-                            work={work}
-                            isLarge={index === 0}
-                        />
-                    ))}
-                </div>
-            )}
-
         </section>
     )
 }

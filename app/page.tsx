@@ -27,7 +27,6 @@ export default async function Home() {
         {/* Passiamo l'immagine hero a Hero come prop */}
         <Hero heroImage={settings?.heroImage ?? null} />
         <Works />
-        <About />
         <Categories />
         <Footer />
       </main>

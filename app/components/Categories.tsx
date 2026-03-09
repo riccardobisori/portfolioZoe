@@ -36,7 +36,6 @@ function CategoryCard({ category }: { category: Category }) {
     return (
         <div
             style={{
-                background: 'var(--cream)',
                 padding: '3rem 2.5rem',
                 // transition per il cambio colore al hover
                 transition: 'background 0.4s ease',
@@ -115,35 +114,6 @@ function CategoryCard({ category }: { category: Category }) {
 export default function Categories() {
     return (
         <section id="categories" className="px-6 md:px-12 py-20 md:py-32">
-
-            {/* Header sezione */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                marginBottom: '4rem',
-                borderBottom: '1px solid rgba(26,24,20,0.1)',
-                paddingBottom: '1.5rem',
-            }}>
-                <span style={{
-                    fontSize: '0.6rem',
-                    letterSpacing: '0.35em',
-                    textTransform: 'uppercase',
-                    color: 'var(--dust)',
-                }}>
-                    Archivio
-                </span>
-
-                <h2 style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    fontSize: '2.5rem',
-                    fontWeight: 300,
-                    fontStyle: 'italic',
-                    color: 'var(--ink)',
-                }}>
-                    Series
-                </h2>
-            </div>
 
             {/* 
                 Griglia a tre colonne separate da bordi sottili.

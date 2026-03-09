@@ -27,13 +27,42 @@ export default async function Works() {
     // async/await funziona direttamente nei Server Component
     const works: SanityWork[] = await client.fetch(featuredWorksQuery)
 
-    // Trasformiamo i dati Sanity aggiungendo l'URL dell'immagine
-    const worksWithUrls = works.map(work => ({
-        ...work,  // spread operator — copia tutte le proprietà esistenti
-        imageUrl: work.mainImage
-            ? urlFor(work.mainImage).width(800).height(1000).url()
-            : null,  // se non c'è immagine, null
-    }))
+    // Trasformiamo i dati Sanity aggiungendo l'URL dell'immagine e se è orizzontale
+    const worksWithUrls = works.map(work => {
+        let isLandscape = false;
 
-    return <WorksClient works={worksWithUrls} />
+        // Estrarre le dimensioni reali dal _ref di Sanity (es. image-id-2000x3000-jpg)
+        if (work.mainImage?.asset?._ref) {
+            const ref = work.mainImage.asset._ref;
+            const dimensionsMatch = ref.match(/-(\d+)x(\d+)-/);
+            if (dimensionsMatch) {
+                const originalWidth = parseInt(dimensionsMatch[1], 10);
+                const originalHeight = parseInt(dimensionsMatch[2], 10);
+                isLandscape = originalWidth > originalHeight;
+            }
+        }
+
+        return {
+            ...work,
+            imageUrl: work.mainImage ? urlFor(work.mainImage).width(800).url() : null,
+            isLandscape,
+        }
+    })
+
+    // Separiamo verticali e orizzontali per creare una composizione più armoniosa
+    const portraits = worksWithUrls.filter(w => !w.isLandscape);
+    const landscapes = worksWithUrls.filter(w => w.isLandscape);
+
+    // Mescoliamo con un rapporto equilibrato: 2 verticali, 1 orizzontale
+    const mixedWorks = [];
+    while (portraits.length > 0 || landscapes.length > 0) {
+        if (portraits.length > 0) mixedWorks.push(portraits.shift());
+        if (portraits.length > 0) mixedWorks.push(portraits.shift());
+        if (landscapes.length > 0) mixedWorks.push(landscapes.shift());
+    }
+
+    // Filtriamo gli eventuali undefined se uno degli array è finito prima dell'altro
+    const finalWorks = mixedWorks.filter(w => w !== undefined);
+
+    return <WorksClient works={finalWorks as any} />
 }
