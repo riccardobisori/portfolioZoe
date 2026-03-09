@@ -46,8 +46,10 @@ function HoverOverlay() {
 }
 
 // ── WORK CARD ─────────────────────────────────────────────────────────────
-function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: boolean }) {
+function WorkCard({ work, index }: { work: WorkWithUrl; index: number }) {
     const cardRef = useRef<HTMLAnchorElement>(null)
+    const aspectRatios = ['3/4', '4/5', '2/3', '1/1']
+    const cardAspectRatio = aspectRatios[index % aspectRatios.length]
 
     useEffect(() => {
         const el = cardRef.current
@@ -73,19 +75,20 @@ function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: bool
             href={`/works/${work.slug.current}`}
             className="reveal"
             style={{
-                gridRow: isLarge ? 'span 2' : 'span 1',
                 position: 'relative',
                 overflow: 'hidden',
                 cursor: 'none',
-                display: 'block',
+                display: 'inline-block',
+                width: '100%',
                 textDecoration: 'none',
                 color: 'inherit',
+                breakInside: 'avoid',
+                marginBottom: '1.5rem',
             }}
         >
             <div style={{
                 width: '100%',
-                aspectRatio: isLarge ? 'unset' : '3/4',
-                height: isLarge ? '100%' : 'auto',
+                aspectRatio: cardAspectRatio,
                 position: 'relative',
                 overflow: 'hidden',
                 minHeight: '260px',
@@ -213,12 +216,18 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
                     Nessun lavoro in evidenza — aggiungine uno dallo Studio Sanity.
                 </p>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-6">
+                <div
+                    style={{
+                        columnGap: '1.5rem',
+                        columnCount: 1,
+                    }}
+                    className="md:[column-count:2] lg:[column-count:3]"
+                >
                     {works.map((work, index) => (
                         <WorkCard
                             key={work._id}
                             work={work}
-                            isLarge={index === 0}
+                            index={index}
                         />
                     ))}
                 </div>
