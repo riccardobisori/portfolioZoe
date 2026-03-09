@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { SanityWork } from './Works'
 
 // Estendiamo il tipo SanityWork aggiungendo imageUrl
@@ -46,7 +47,7 @@ function HoverOverlay() {
 
 // ── WORK CARD ─────────────────────────────────────────────────────────────
 function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: boolean }) {
-    const cardRef = useRef<HTMLDivElement>(null)
+    const cardRef = useRef<HTMLAnchorElement>(null)
 
     useEffect(() => {
         const el = cardRef.current
@@ -67,14 +68,18 @@ function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: bool
     }, [])
 
     return (
-        <div
+        <Link
             ref={cardRef}
+            href={`/works/${work.slug.current}`}
             className="reveal"
             style={{
                 gridRow: isLarge ? 'span 2' : 'span 1',
                 position: 'relative',
                 overflow: 'hidden',
                 cursor: 'none',
+                display: 'block',
+                textDecoration: 'none',
+                color: 'inherit',
             }}
         >
             <div style={{
@@ -134,7 +139,7 @@ function WorkCard({ work, isLarge = false }: { work: WorkWithUrl; isLarge?: bool
                     {work.category?.title} · {work.year}
                 </span>
             </div>
-        </div>
+        </Link>
     )
 }
 
