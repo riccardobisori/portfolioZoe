@@ -61,24 +61,6 @@ export default function Hero({ heroImage }: HeroProps) {
                 zIndex: 1,
             }} />
 
-            {/* ── ELEMENTO GEOMETRICO BAUHAUS ── */}
-            {/* Rettangolo vuoto — cornice geometrica, non riempito
-                Bauhaus usa la geometria come struttura, non come decorazione */}
-            <div
-                className="hidden md:block"
-                style={{
-                    position: 'absolute',
-                    top: '18%',
-                    right: '10%',
-                    width: '120px',
-                    height: '120px',
-                    border: '2px solid rgba(255,255,255,0.25)',
-                    zIndex: 2,
-                    opacity: 0,
-                    animation: 'fadeIn 1.2s ease 0.8s forwards',
-                }}
-            />
-
             {/* ── CONTENUTO TESTUALE ── */}
             <div style={{
                 position: 'absolute',

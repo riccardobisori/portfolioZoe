@@ -9,10 +9,11 @@ interface WorkWithUrl extends SanityWork {
     isLandscape?: boolean
 }
 
-const MASONRY_GAP = 28
+const MOBILE_MASONRY_GAP = 8
+const DESKTOP_MASONRY_GAP = 10
 
 // ── SINGOLA CARD MASONRY ──────────────────────────────────────────────────
-function MasonryCard({ work }: { work: WorkWithUrl }) {
+function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: number }) {
     const cardRef = useRef<HTMLAnchorElement>(null)
     const contentRef = useRef<HTMLDivElement>(null)
     const [hovered, setHovered] = useState(false)
@@ -45,13 +46,13 @@ function MasonryCard({ work }: { work: WorkWithUrl }) {
                 // Calcoliamo l'altezza reale del contenuto
                 const height = entry.target.getBoundingClientRect().height
                 // Aggiungiamo il gap verticale così ogni card respira nella masonry
-                setRowSpan(Math.ceil(height) + MASONRY_GAP)
+                setRowSpan(Math.ceil(height) + masonryGap)
             }
         })
 
         resizeObserver.observe(contentRef.current)
         return () => resizeObserver.disconnect()
-    }, [])
+    }, [masonryGap])
 
     return (
         <Link
@@ -72,7 +73,10 @@ function MasonryCard({ work }: { work: WorkWithUrl }) {
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
-            <div ref={contentRef} style={{ position: 'relative', overflow: 'hidden' }}>
+            <div
+                ref={contentRef}
+                style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}
+            >
                 {work.imageUrl && (
                     <img
                         src={work.imageUrl}
@@ -85,6 +89,7 @@ function MasonryCard({ work }: { work: WorkWithUrl }) {
                             width: '100%',
                             height: 'auto',
                             display: 'block',
+                            borderRadius: '8px',
                             transform: hovered ? 'scale(1.03)' : 'scale(1)',
                             transition: 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)'
                         }}
@@ -136,6 +141,19 @@ function MasonryCard({ work }: { work: WorkWithUrl }) {
 
 // ── COMPONENTE PRINCIPALE ─────────────────────────────────────────────────
 export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
+    const [masonryGap, setMasonryGap] = useState(MOBILE_MASONRY_GAP)
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(min-width: 1024px)')
+        const updateGap = () => {
+            setMasonryGap(mediaQuery.matches ? DESKTOP_MASONRY_GAP : MOBILE_MASONRY_GAP)
+        }
+
+        updateGap()
+        mediaQuery.addEventListener('change', updateGap)
+        return () => mediaQuery.removeEventListener('change', updateGap)
+    }, [])
+
     if (works.length === 0) return null
 
     return (
@@ -149,6 +167,19 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
                 paddingRight: 'clamp(16px, 3vw, 48px)',
             }}
         >
+            <h2
+                style={{
+                    margin: 0,
+                    marginBottom: 'clamp(32px, 6vw, 72px)',
+                    fontFamily: 'var(--font-monserrat)',
+                    fontSize: 'clamp(2.8rem, 9vw, 8rem)',
+                    lineHeight: 0.95,
+                    letterSpacing: '0.02em',
+                    color: 'var(--charcoal)',
+                }}
+            >
+                INTRO
+            </h2>
             <div
                 style={{
                     display: 'grid',
@@ -158,12 +189,12 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
                     gridAutoRows: '1px',
                     // l'algoritmo 'dense' riempie gli spazi vuoti lasciati dalle altezze sfalsate
                     gridAutoFlow: 'dense',
-                    columnGap: `${MASONRY_GAP}px`,
+                    columnGap: `${masonryGap}px`,
                     // non usiamo gap o rowGap verticalmente perché usiamo lo span per lo spazio
                 }}
             >
                 {works.map(work => (
-                    <MasonryCard key={work._id} work={work} />
+                    <MasonryCard key={work._id} work={work} masonryGap={masonryGap} />
                 ))}
             </div>
         </section>

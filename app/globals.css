@@ -17,6 +17,7 @@
   --dust: #9e9890;
   --accent: #c8b89a;
   --paper: #ede9e3;
+  --paper-base: #faf8f4;
 }
 
 html {
@@ -26,6 +27,17 @@ html {
 body {
   color: var(--ink);
   overflow-x: hidden;
+  background-color: var(--paper-base);
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.55) 0, rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 84% 76%, rgba(212, 201, 186, 0.16) 0, rgba(212, 201, 186, 0) 46%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(120, 104, 82, 0.025) 0px,
+      rgba(120, 104, 82, 0.025) 1px,
+      rgba(255, 255, 255, 0) 2px,
+      rgba(255, 255, 255, 0) 4px
+    );
 }
 
 /* Fixed grain overlay for subtle film-like texture */

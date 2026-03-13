@@ -8,12 +8,45 @@ export default function Cursor() {
     const [visible, setVisible] = useState(false)
     const [hovered, setHovered] = useState(false)
     const [clicked, setClicked] = useState(false)
+    const [cursorColor, setCursorColor] = useState('#fff')
     const animRef = useRef<number>(0)
 
     useEffect(() => {
+        const parseRgb = (color: string): [number, number, number] | null => {
+            const match = color.match(/\d+(\.\d+)?/g)
+            if (!match || match.length < 3) return null
+            return [Number(match[0]), Number(match[1]), Number(match[2])]
+        }
+
+        const getEffectiveBackground = (start: Element | null): [number, number, number] => {
+            let el: Element | null = start
+            while (el) {
+                const bg = window.getComputedStyle(el).backgroundColor
+                if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') {
+                    const rgb = parseRgb(bg)
+                    if (rgb) return rgb
+                }
+                el = el.parentElement
+            }
+            return [255, 255, 255]
+        }
+
+        const getRelativeLuminance = ([r, g, b]: [number, number, number]) => {
+            const toLinear = (value: number) => {
+                const channel = value / 255
+                return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+            }
+            return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
+        }
+
         const onMouseMove = (e: MouseEvent) => {
             setMouse({ x: e.clientX, y: e.clientY })
             setVisible(true)
+
+            const target = document.elementFromPoint(e.clientX, e.clientY)
+            const bgRgb = getEffectiveBackground(target)
+            const luminance = getRelativeLuminance(bgRgb)
+            setCursorColor(luminance > 0.5 ? '#111' : '#fff')
         }
         const onMouseLeave = () => setVisible(false)
         const onMouseEnter = () => setVisible(true)
@@ -81,13 +114,12 @@ export default function Cursor() {
                 top: mouse.y,
                 width: `${sizePoint}px`,
                 height: `${sizePoint}px`,
-                background: 'white',
+                background: cursorColor,
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',
                 zIndex: 9999,
                 opacity: visible ? 1 : 0,
-                transition: 'opacity 0.2s ease',
-                mixBlendMode: 'difference',
+                transition: 'opacity 0.2s ease, background-color 0.15s ease',
             }} />
 
             {/*
@@ -104,15 +136,14 @@ export default function Cursor() {
                 top: square.y,
                 width: `${sizeSquare}px`,
                 height: `${sizeSquare}px`,
-                border: '1px solid white',
+                border: `1px solid ${cursorColor}`,
                 transform: 'translate(-50%, -50%)',
                 pointerEvents: 'none',
                 zIndex: 9998,
                 opacity: visible ? 0.8 : 0,
                 // Transizione solo su size e opacity — il lag è gestito dal lerp
                 // non da CSS transition, altrimenti i due si sovrappongono
-                transition: 'width 0.12s ease, height 0.12s ease, opacity 0.2s ease',
-                mixBlendMode: 'difference',
+                transition: 'width 0.12s ease, height 0.12s ease, opacity 0.2s ease, border-color 0.15s ease',
             }} />
         </>
     )
