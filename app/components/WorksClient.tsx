@@ -9,6 +9,8 @@ interface WorkWithUrl extends SanityWork {
     isLandscape?: boolean
 }
 
+const MASONRY_GAP = 28
+
 // ── SINGOLA CARD MASONRY ──────────────────────────────────────────────────
 function MasonryCard({ work }: { work: WorkWithUrl }) {
     const cardRef = useRef<HTMLAnchorElement>(null)
@@ -39,11 +41,11 @@ function MasonryCard({ work }: { work: WorkWithUrl }) {
         if (!contentRef.current) return
 
         const resizeObserver = new ResizeObserver((entries) => {
-            for (let entry of entries) {
+            for (const entry of entries) {
                 // Calcoliamo l'altezza reale del contenuto
                 const height = entry.target.getBoundingClientRect().height
-                // Aggiungiamo 12 per il gap verticale (visto che columnGap è 12px)
-                setRowSpan(Math.ceil(height) + 12)
+                // Aggiungiamo il gap verticale così ogni card respira nella masonry
+                setRowSpan(Math.ceil(height) + MASONRY_GAP)
             }
         })
 
@@ -140,21 +142,23 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
         <section
             id="works"
             style={{
-                padding: '10px',
+                width: '100%',
                 paddingTop: '80px',
+                paddingBottom: '20px',
+                paddingLeft: 'clamp(16px, 3vw, 48px)',
+                paddingRight: 'clamp(16px, 3vw, 48px)',
             }}
         >
             <div
                 style={{
-                    maxWidth: '1200px',
-                    margin: '0 auto',
                     display: 'grid',
+                    width: '100%',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                     // riga base di 1px, in questo modo lo span equivale ai pixel in altezza!
                     gridAutoRows: '1px',
                     // l'algoritmo 'dense' riempie gli spazi vuoti lasciati dalle altezze sfalsate
                     gridAutoFlow: 'dense',
-                    columnGap: '12px',
+                    columnGap: `${MASONRY_GAP}px`,
                     // non usiamo gap o rowGap verticalmente perché usiamo lo span per lo spazio
                 }}
             >

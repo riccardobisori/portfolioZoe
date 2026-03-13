@@ -44,7 +44,7 @@ export default async function Works() {
 
         return {
             ...work,
-            imageUrl: work.mainImage ? urlFor(work.mainImage).width(800).url() : null,
+            imageUrl: work.mainImage ? urlFor(work.mainImage).width(1400).url() : null,
             isLandscape,
         }
     })
