@@ -80,7 +80,7 @@ button,
   transform: translateY(0);
 }
 
-/* Footer link hover — gestito in CSS perché Footer è Server Component */
-footer a:hover {
-  color: var(--ink) !important;
+/* Footer link hover su versione scura */
+.site-footer a:hover {
+  color: var(--cream) !important;
 }
