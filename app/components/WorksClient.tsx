@@ -144,6 +144,7 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
     const [masonryGap, setMasonryGap] = useState(MOBILE_MASONRY_GAP)
 
     useEffect(() => {
+        // Gap responsivo: su desktop teniamo una spaziatura leggermente diversa.
         const mediaQuery = window.matchMedia('(min-width: 1024px)')
         const updateGap = () => {
             setMasonryGap(mediaQuery.matches ? DESKTOP_MASONRY_GAP : MOBILE_MASONRY_GAP)

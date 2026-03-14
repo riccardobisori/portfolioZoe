@@ -9,7 +9,7 @@ export default function Nav() {
       style={{
         // Nav trasparente — diventa leggibile grazie al mix con l'immagine hero
         // Nessun background pesante, solo una linea sottile in basso
-        borderBottom: '1px solid rgba(255,255,255,0.12)',
+        borderBottom: '1px solid var(--ink)',
       }}
     >
       <div className="flex items-center justify-between px-6 md:px-16 py-6 md:py-8">
@@ -22,10 +22,9 @@ export default function Nav() {
             fontWeight: 400,
             letterSpacing: '0.45em',
             textTransform: 'uppercase',
-            color: 'white',
-            // Linea sotto le iniziali — dettaglio Bauhaus
-            borderBottom: '2px solid white',
-            paddingBottom: '2px',
+            color: 'var(--ink)',
+            animation: 'fadeIn 1s ease 1s forwards',
+            opacity: '0'
           }}>
             GZG
           </span>
@@ -34,9 +33,9 @@ export default function Nav() {
         {/* Link di navigazione — bianchi su hero scuro */}
         <ul className="hidden md:flex gap-10 list-none">
           {[
-            { label: 'Works',   href: '#works' },
-            { label: 'About',   href: '#about' },
-            { label: 'Series',  href: '#categories' },
+            { label: 'Works', href: '#works' },
+            { label: 'About', href: '#about' },
+            { label: 'Series', href: '#categories' },
             { label: 'Contact', href: '#contact' },
           ].map((item) => (
             <li key={item.href}>
@@ -46,15 +45,15 @@ export default function Nav() {
                   fontSize: '0.58rem',
                   letterSpacing: '0.32em',
                   textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.65)',
+                  color: 'var(--ink)',
                   textDecoration: 'none',
                   transition: 'color 0.2s ease',
                 }}
                 onMouseEnter={e => {
-                  e.currentTarget.style.color = 'white'
+                  e.currentTarget.style.color = 'var(--ink)'
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.65)'
+                  e.currentTarget.style.color = 'var(--ink)'
                 }}
               >
                 {item.label}

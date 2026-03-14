@@ -28,6 +28,7 @@ export default function Cursor() {
                 }
                 el = el.parentElement
             }
+            // Fallback neutro quando non troviamo un background esplicito nel DOM.
             return [255, 255, 255]
         }
 
@@ -46,6 +47,7 @@ export default function Cursor() {
             const target = document.elementFromPoint(e.clientX, e.clientY)
             const bgRgb = getEffectiveBackground(target)
             const luminance = getRelativeLuminance(bgRgb)
+            // Soglia semplice per passare automaticamente tra cursore chiaro/scuro.
             setCursorColor(luminance > 0.5 ? '#111' : '#fff')
         }
         const onMouseLeave = () => setVisible(false)

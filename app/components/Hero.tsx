@@ -12,8 +12,9 @@ interface HeroProps {
 export default function Hero({ heroImage }: HeroProps) {
     const [expandProgress, setExpandProgress] = useState(0)
     const [scrollUnlocked, setScrollUnlocked] = useState(false)
-    const progressRef = useRef(0) // valore visualizzato
-    const targetRef = useRef(0) // valore target verso cui interpoliamo
+    // progressRef = valore renderizzato; targetRef = valore verso cui animiamo in modo fluido.
+    const progressRef = useRef(0)
+    const targetRef = useRef(0)
 
     useEffect(() => {
         progressRef.current = expandProgress
@@ -40,6 +41,7 @@ export default function Hero({ heroImage }: HeroProps) {
             if (!shouldCapture && !(scrollingDown && current >= 1)) return
 
             event.preventDefault()
+            // Lo scroll pilota il "target": la RAF sotto si occupa di interpolare in modo morbido.
             targetRef.current = Math.max(
                 0,
                 Math.min(1, targetRef.current + event.deltaY * SCROLL_TO_PROGRESS)
@@ -56,6 +58,7 @@ export default function Hero({ heroImage }: HeroProps) {
         const animate = () => {
             const current = progressRef.current
             const target = targetRef.current
+            // Lerp leggero per evitare scatti nei trackpad/scroll wheel.
             const next = current + (target - current) * 0.12
 
             if (Math.abs(next - current) > 0.0003) {
@@ -75,6 +78,7 @@ export default function Hero({ heroImage }: HeroProps) {
 
     useEffect(() => {
         const previous = document.body.style.overflow
+        // Finché la Hero non è "sbloccata" dalla freccia, blocchiamo lo scroll documento.
         if (!scrollUnlocked) {
             document.body.style.overflow = 'hidden'
         } else {
@@ -96,7 +100,9 @@ export default function Hero({ heroImage }: HeroProps) {
     const showArrow = expandProgress >= 0.985
     const revealProgress = showArrow ? 1 : expandProgress
     const curtainWidth = `${50 - revealProgress * 50}%`
-    const titleTranslateX = `translateX(calc(-${revealProgress.toFixed(4)} * (100vw - (2 * clamp(2rem, 6vw, 5rem)) - min(46vw, 560px))))`
+    const progressValue = revealProgress.toFixed(4)
+    // Sposta il blocco titolo da destra a sinistra mantenendo margini simmetrici.
+    const titleLeft = `calc((1 - ${progressValue}) * (100vw - clamp(2rem, 6vw, 5rem) - min(46vw, 560px)) + ${progressValue} * clamp(2rem, 6vw, 5rem))`
 
     return (
         <section
@@ -144,7 +150,11 @@ export default function Hero({ heroImage }: HeroProps) {
                 top: 0,
                 bottom: 0,
                 width: curtainWidth,
-                background: '#fff',
+                backgroundColor: 'var(--paper-base)',
+                backgroundImage:
+                    "linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(243, 236, 226, 0.06) 100%), url('/textures/paper-texture.jpg')",
+                backgroundSize: '100% 100%, 420px auto',
+                backgroundRepeat: 'no-repeat, repeat',
                 zIndex: 2,
                 pointerEvents: 'none',
             }} />
@@ -157,48 +167,53 @@ export default function Hero({ heroImage }: HeroProps) {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
-                alignItems: 'flex-end',
                 padding: 'clamp(2rem, 6vw, 5rem)',
                 paddingBottom: 'clamp(3rem, 8vw, 6rem)',
                 pointerEvents: 'none',
-                transform: titleTranslateX,
-                willChange: 'transform',
             }}>
-                <p style={{
-                    fontSize: '0.58rem',
-                    letterSpacing: '0.45em',
-                    textTransform: 'uppercase',
-                    color: 'var(--ink)',
-                    marginBottom: '1.25rem',
-                    animation: 'fadeUp 1s ease 1s forwards',
-                    textAlign: 'right',
-                    width: 'min(46vw, 560px)',
-                    mixBlendMode: 'difference',
-                }}>
-                    Ginevra Zoe Giannelli
-                </p>
-
-                <h1 style={{
-                    fontSize: 'clamp(3.5rem, 6vw, 7rem)',
-                    fontWeight: 400,
-                    letterSpacing: '0.05em',
-                    lineHeight: 1.05,
-                    color: 'var(--ink)',
-                    textTransform: 'uppercase',
-                    textAlign: 'right',
-                    margin: 0,
-                    width: 'min(46vw, 560px)',
-                    mixBlendMode: 'difference',
-                }}>
-                    Visual<br />
-                    <span style={{
-                        fontWeight: 400,
-                        letterSpacing: '0.003em',
+                <div
+                    style={{
+                        position: 'absolute',
+                        left: titleLeft,
+                        bottom: 'clamp(3rem, 8vw, 6rem)',
+                        width: 'min(46vw, 560px)',
+                        willChange: 'left',
+                    }}
+                >
+                    <p style={{
+                        fontSize: '0.58rem',
+                        letterSpacing: '0.45em',
+                        textTransform: 'uppercase',
                         color: 'var(--ink)',
+                        marginBottom: '1.25rem',
+                        animation: 'fadeUp 1s ease 1s forwards',
+                        textAlign: 'center',
+                        mixBlendMode: 'difference',
                     }}>
-                        Works
-                    </span>
-                </h1>
+                        Ginevra Zoe Giannelli
+                    </p>
+
+                    <h1 style={{
+                        fontSize: 'clamp(3.5rem, 6vw, 7rem)',
+                        fontWeight: 400,
+                        letterSpacing: '0.05em',
+                        lineHeight: 1.05,
+                        color: 'var(--ink)',
+                        textTransform: 'uppercase',
+                        textAlign: 'center',
+                        margin: 0,
+                        mixBlendMode: 'difference',
+                    }}>
+                        Visual<br />
+                        <span style={{
+                            fontWeight: 400,
+                            letterSpacing: '0.003em',
+                            color: 'var(--ink)',
+                        }}>
+                            Works
+                        </span>
+                    </h1>
+                </div>
 
                 <div
                     className="hidden md:block"
