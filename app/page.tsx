@@ -1,7 +1,6 @@
 import Nav from './components/Nav'
 import Hero from './components/Hero'
 import HomeWorksPreview from './components/HomeWorksPreview'
-import Categories from './components/Categories'
 import Footer from './components/Footer'
 import HomeScrollReset from './components/HomeScrollReset'
 import { client } from '@/sanity/lib/client'
@@ -19,7 +18,6 @@ export default async function Home() {
         {/* Passiamo l'immagine hero a Hero come prop */}
         <Hero heroImage={settings?.heroImage ?? null} />
         <HomeWorksPreview />
-        <Categories />
         <Footer />
       </main>
     </>
