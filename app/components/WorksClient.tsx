@@ -160,6 +160,7 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
     return (
         <section
             id="works"
+            data-cursor-scope
             style={{
                 width: '100%',
                 paddingTop: '80px',

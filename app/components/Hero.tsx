@@ -140,6 +140,7 @@ export default function Hero({ heroImage }: HeroProps) {
 
     return (
         <section
+            data-cursor-scope
             style={{
                 position: 'relative',
                 width: '100%',
@@ -203,7 +204,7 @@ export default function Hero({ heroImage }: HeroProps) {
                 justifyContent: 'flex-end',
                 padding: 'clamp(1rem, 1vw, 3rem)',
                 paddingBottom: 'clamp(3rem, 8vw, 6rem)',
-                pointerEvents: 'none',
+                pointerEvents: 'auto',
             }}>
                 <div
                     ref={titleRef}

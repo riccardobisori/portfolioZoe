@@ -1,152 +1,154 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
+
+const CLICKABLE_SELECTOR =
+    'a, button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]'
 
 export default function Cursor() {
-    const [mouse, setMouse] = useState({ x: 0, y: 0 })
-    const [square, setSquare] = useState({ x: 0, y: 0 })
-    const [visible, setVisible] = useState(false)
-    const [hovered, setHovered] = useState(false)
-    const [clicked, setClicked] = useState(false)
-    const [cursorColor, setCursorColor] = useState('#fff')
-    const animRef = useRef<number>(0)
+    const cursorRef = useRef<HTMLDivElement>(null)
+    const trailRef = useRef<HTMLDivElement>(null)
+    const hintRef = useRef<HTMLDivElement>(null)
+    const targetRef = useRef({ x: 0, y: 0 })
+    const currentRef = useRef({ x: 0, y: 0 })
+    const trailCurrentRef = useRef({ x: 0, y: 0 })
+    const hoveredRef = useRef<boolean | null>(null)
+    const visibleRef = useRef(false)
+    const rafRef = useRef<number>(0)
 
     useEffect(() => {
-        const parseRgb = (color: string): [number, number, number] | null => {
-            const match = color.match(/\d+(\.\d+)?/g)
-            if (!match || match.length < 3) return null
-            return [Number(match[0]), Number(match[1]), Number(match[2])]
-        }
-
-        const getEffectiveBackground = (start: Element | null): [number, number, number] => {
-            let el: Element | null = start
-            while (el) {
-                const bg = window.getComputedStyle(el).backgroundColor
-                if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') {
-                    const rgb = parseRgb(bg)
-                    if (rgb) return rgb
-                }
-                el = el.parentElement
-            }
-            // Fallback neutro quando non troviamo un background esplicito nel DOM.
-            return [255, 255, 255]
-        }
-
-        const getRelativeLuminance = ([r, g, b]: [number, number, number]) => {
-            const toLinear = (value: number) => {
-                const channel = value / 255
-                return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
-            }
-            return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
-        }
-
         const onMouseMove = (e: MouseEvent) => {
-            setMouse({ x: e.clientX, y: e.clientY })
-            setVisible(true)
-
-            const target = document.elementFromPoint(e.clientX, e.clientY)
-            const bgRgb = getEffectiveBackground(target)
-            const luminance = getRelativeLuminance(bgRgb)
-            // Soglia semplice per passare automaticamente tra cursore chiaro/scuro.
-            setCursorColor(luminance > 0.5 ? '#111' : '#fff')
+            targetRef.current = { x: e.clientX, y: e.clientY }
         }
-        const onMouseLeave = () => setVisible(false)
-        const onMouseEnter = () => setVisible(true)
-        const onMouseDown = () => setClicked(true)
-        const onMouseUp = () => setClicked(false)
 
-        const addHoverListeners = () => {
-            document.querySelectorAll('a, button').forEach(el => {
-                el.addEventListener('mouseenter', () => setHovered(true))
-                el.addEventListener('mouseleave', () => setHovered(false))
-            })
+        const onMouseOver = (e: MouseEvent) => {
+            const target = e.target instanceof Element ? e.target : null
+            const isInHomeScope = !!target?.closest('[data-cursor-scope]')
+            const isHoveringClickable =
+                isInHomeScope && !!target?.closest(CLICKABLE_SELECTOR)
+            if (hoveredRef.current === isHoveringClickable) return
+
+            hoveredRef.current = isHoveringClickable
+            if (cursorRef.current) {
+                cursorRef.current.style.transform = isHoveringClickable
+                    ? 'translate(-50%, -50%) scale(1.65)'
+                    : 'translate(-50%, -50%) scale(1)'
+                cursorRef.current.style.borderRadius = isHoveringClickable ? '4px' : '0'
+                cursorRef.current.style.boxShadow = isHoveringClickable
+                    ? '0 0 0 1.5px rgba(255,255,255,0.9) inset'
+                    : 'none'
+            }
+            if (trailRef.current) {
+                trailRef.current.style.transform = isHoveringClickable
+                    ? 'translate(-50%, -50%) scale(1.9)'
+                    : 'translate(-50%, -50%) scale(1)'
+                trailRef.current.style.borderRadius = isHoveringClickable ? '5px' : '0'
+                trailRef.current.style.opacity = isHoveringClickable ? '0.9' : '0.7'
+            }
+            if (hintRef.current) {
+                hintRef.current.style.opacity = isHoveringClickable ? '1' : '0'
+                hintRef.current.style.transform = isHoveringClickable
+                    ? 'scale(1)'
+                    : 'scale(0.6)'
+            }
+        }
+
+        const lerp = (start: number, end: number, amount: number) => start + (end - start) * amount
+
+        const tick = () => {
+            const cursor = cursorRef.current
+            const trail = trailRef.current
+            if (cursor && trail) {
+                currentRef.current.x = lerp(currentRef.current.x, targetRef.current.x, 0.14)
+                currentRef.current.y = lerp(currentRef.current.y, targetRef.current.y, 0.14)
+                trailCurrentRef.current.x = lerp(trailCurrentRef.current.x, targetRef.current.x, 0.09)
+                trailCurrentRef.current.y = lerp(trailCurrentRef.current.y, targetRef.current.y, 0.09)
+
+                cursor.style.left = `${currentRef.current.x}px`
+                cursor.style.top = `${currentRef.current.y}px`
+                trail.style.left = `${trailCurrentRef.current.x}px`
+                trail.style.top = `${trailCurrentRef.current.y}px`
+                if (!visibleRef.current) {
+                    visibleRef.current = true
+                    cursor.style.opacity = '1'
+                    trail.style.opacity = '0.7'
+                }
+            }
+            rafRef.current = requestAnimationFrame(tick)
         }
 
         window.addEventListener('mousemove', onMouseMove)
-        document.addEventListener('mouseleave', onMouseLeave)
-        document.addEventListener('mouseenter', onMouseEnter)
-        window.addEventListener('mousedown', onMouseDown)
-        window.addEventListener('mouseup', onMouseUp)
-        const timer = setTimeout(addHoverListeners, 0)
+        document.addEventListener('mouseover', onMouseOver)
+        rafRef.current = requestAnimationFrame(tick)
 
         return () => {
             window.removeEventListener('mousemove', onMouseMove)
-            document.removeEventListener('mouseleave', onMouseLeave)
-            document.removeEventListener('mouseenter', onMouseEnter)
-            window.removeEventListener('mousedown', onMouseDown)
-            window.removeEventListener('mouseup', onMouseUp)
-            clearTimeout(timer)
+            document.removeEventListener('mouseover', onMouseOver)
+            cancelAnimationFrame(rafRef.current)
         }
     }, [])
-
-    // Animazione del quadrato con lerp — segue il mouse con inerzia
-    // La velocità di inseguimento è controllata dal fattore 0.08
-    // più basso = più lento e morbido, più alto = più reattivo
-    useEffect(() => {
-        const animate = () => {
-            setSquare(prev => ({
-                x: prev.x + (mouse.x - prev.x) * 0.08,
-                y: prev.y + (mouse.y - prev.y) * 0.08,
-            }))
-            animRef.current = requestAnimationFrame(animate)
-        }
-        animRef.current = requestAnimationFrame(animate)
-        return () => cancelAnimationFrame(animRef.current)
-    }, [mouse])
 
     if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) {
         return null
     }
 
-    // Dimensione del quadrato in base allo stato
-    // normale → hover (si ingrandisce) → click (si rimpicciolisce di scatto)
-    const sizeSquare = clicked ? 16 : hovered ? 48 : 32
-    const sizePoint = hovered ? 8 : 3
-
     return (
         <>
-            {/*
-                Punto fisso — segue il mouse istantaneamente.
-                È il "vero" cursore, preciso e puntuale.
-                Piccolo e discreto — non distrae.
-            */}
-            <div style={{
+            <div
+                ref={trailRef}
+                style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '0',
+                    position: 'fixed',
+                    left: 0,
+                    top: 0,
+                    pointerEvents: 'none',
+                    zIndex: 9998,
+                    mixBlendMode: 'difference',
+                    border: '1px solid #fff',
+                    transform: 'translate(-50%, -50%) scale(1)',
+                    transition: 'transform 240ms ease-out, opacity 160ms ease-out, border-radius 220ms ease-out',
+                    willChange: 'left, top, transform',
+                    opacity: 0,
+                }}
+            />
+        <div
+            ref={cursorRef}
+            style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '0',
                 position: 'fixed',
-                left: mouse.x,
-                top: mouse.y,
-                width: `${sizePoint}px`,
-                height: `${sizePoint}px`,
-                background: cursorColor,
-                transform: 'translate(-50%, -50%)',
+                left: 0,
+                top: 0,
                 pointerEvents: 'none',
                 zIndex: 9999,
-                opacity: visible ? 1 : 0,
-                transition: 'opacity 0.2s ease, background-color 0.15s ease',
-            }} />
-
-            {/*
-                Quadrato vuoto — segue con ritardo (lerp).
-                Niente border-radius — geometria Bauhaus pura.
-                Al hover si ingrandisce per "inquadrare" l'elemento.
-                Al click si contrae di scatto — feedback immediato.
-                mixBlendMode: difference = si inverte automaticamente
-                su sfondi chiari e scuri, zero logica JS per il colore.
-            */}
-            <div style={{
-                position: 'fixed',
-                left: square.x,
-                top: square.y,
-                width: `${sizeSquare}px`,
-                height: `${sizeSquare}px`,
-                border: `1px solid ${cursorColor}`,
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-                zIndex: 9998,
-                opacity: visible ? 0.8 : 0,
-                // Transizione solo su size e opacity — il lag è gestito dal lerp
-                // non da CSS transition, altrimenti i due si sovrappongono
-                transition: 'width 0.12s ease, height 0.12s ease, opacity 0.2s ease, border-color 0.15s ease',
-            }} />
+                mixBlendMode: 'difference',
+                backgroundColor: '#fff',
+                transform: 'translate(-50%, -50%) scale(1)',
+                transition: 'transform 220ms ease-out, opacity 140ms ease-out, border-radius 220ms ease-out',
+                willChange: 'left, top, transform',
+                opacity: 0,
+                display: 'grid',
+                placeItems: 'center',
+            }}
+        >
+            <div
+                ref={hintRef}
+                aria-hidden="true"
+                style={{
+                    width: '4px',
+                    height: '4px',
+                    backgroundColor: 'rgba(0,0,0,0.9)',
+                    borderRadius: '999px',
+                    opacity: 0,
+                    transform: 'scale(0.6)',
+                    transition: 'opacity 140ms ease-out, transform 180ms ease-out',
+                    userSelect: 'none',
+                }}
+            />
+        </div>
         </>
     )
 }
