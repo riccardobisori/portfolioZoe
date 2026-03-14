@@ -148,6 +148,7 @@ export default function MixedPreviewSection({
     const [masonryGap, setMasonryGap] = useState(MOBILE_MASONRY_GAP)
     const [hoveredCta, setHoveredCta] = useState<'works' | 'series' | null>(null)
     const showArchiveCta = sectionId === 'preview'
+    const ctaLinkWidth = 'clamp(11.5rem, 18vw, 13.5rem)'
 
     // Gap diverso mobile/desktop per una resa visiva più equilibrata.
     useEffect(() => {
@@ -224,6 +225,7 @@ export default function MixedPreviewSection({
                                 display: 'inline-flex',
                                 flexDirection: 'column',
                                 alignItems: 'flex-end',
+                                width: ctaLinkWidth,
                                 gap: '0.26rem',
                                 textDecoration: 'none',
                                 color: 'var(--ink)',
@@ -238,12 +240,13 @@ export default function MixedPreviewSection({
                             <span>View Works Archive {'\u2192'}</span>
                             <span
                                 style={{
+                                    display: 'block',
                                     width: '100%',
-                                    height: '2px',
-                                    background: 'rgba(26, 24, 20, 0.75)',
-                                    transformOrigin: 'left center',
-                                    transform: hoveredCta === 'works' ? 'scaleX(1)' : 'scaleX(0.45)',
-                                    transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                    height: 0,
+                                    borderTop: '1px solid rgba(26, 24, 20, 0.82)',
+                                    clipPath: hoveredCta === 'works' ? 'inset(0 0 0 0)' : 'inset(0 55% 0 0)',
+                                    alignSelf: 'flex-end',
+                                    transition: 'clip-path 320ms cubic-bezier(0.22, 1, 0.36, 1)',
                                 }}
                             />
                         </Link>
@@ -255,6 +258,7 @@ export default function MixedPreviewSection({
                                 display: 'inline-flex',
                                 flexDirection: 'column',
                                 alignItems: 'flex-end',
+                                width: ctaLinkWidth,
                                 gap: '0.26rem',
                                 textDecoration: 'none',
                                 color: 'var(--ink)',
@@ -269,12 +273,13 @@ export default function MixedPreviewSection({
                             <span>View Series Archive {'\u2192'}</span>
                             <span
                                 style={{
+                                    display: 'block',
                                     width: '100%',
-                                    height: '2px',
-                                    background: 'rgba(26, 24, 20, 0.75)',
-                                    transformOrigin: 'left center',
-                                    transform: hoveredCta === 'series' ? 'scaleX(1)' : 'scaleX(0.45)',
-                                    transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                    height: 0,
+                                    borderTop: '1px solid rgba(26, 24, 20, 0.82)',
+                                    clipPath: hoveredCta === 'series' ? 'inset(0 0 0 0)' : 'inset(0 55% 0 0)',
+                                    alignSelf: 'flex-end',
+                                    transition: 'clip-path 320ms cubic-bezier(0.22, 1, 0.36, 1)',
                                 }}
                             />
                         </Link>
