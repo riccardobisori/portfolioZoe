@@ -94,8 +94,8 @@ export default function Nav() {
         <ul className="hidden md:flex gap-10 list-none">
           {[
             { label: 'Works', href: '/works' },
+            { label: 'Series', href: '/series' },
             { label: 'About', href: '#about' },
-            { label: 'Series', href: '#categories' },
             { label: 'Contact', href: '#contact' },
           ].map((item) => (
             <li key={item.href}>
@@ -121,6 +121,7 @@ export default function Nav() {
         <ul className="flex md:hidden items-center gap-5 list-none">
           {[
             { label: 'Works', href: '/works' },
+            { label: 'Series', href: '/series' },
             { label: 'Contact', href: '#contact' },
           ].map((item) => (
             <li key={item.href}>

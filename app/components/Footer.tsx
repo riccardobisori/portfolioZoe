@@ -110,7 +110,7 @@ export default function Footer() {
                             { label: 'Home', href: '/' },
                             { label: 'Works', href: '/works' },
                             { label: 'About', href: '/#about' },
-                            { label: 'Series', href: '/#categories' },
+                            { label: 'Series', href: '/series' },
                         ].map((item) => (
                             <li key={item.label}>
                                 <Link

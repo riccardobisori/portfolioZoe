@@ -28,6 +28,7 @@ export const allWorksQuery = groq`
     title,
     slug,
     year,
+    description,
     mainImage,
     category-> {
       title,

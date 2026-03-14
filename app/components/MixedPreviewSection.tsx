@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { WorkWithUrl } from './work-types'
 
-// Props riusabili sia per preview home sia per pagina /works.
-interface WorkGallerySectionProps {
+// Preview mista in home: contiene lavori eterogenei (Works + Series).
+interface MixedPreviewSectionProps {
     works: WorkWithUrl[]
     sectionId?: string
     headingText?: string
@@ -140,12 +140,14 @@ function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: numb
 }
 
 // Sezione gallery generica: stessa UI, contenuti diversi a seconda della pagina.
-export default function WorkGallerySection({
+export default function MixedPreviewSection({
     works,
     sectionId = 'preview',
-    headingText = 'Preview: selezione sparsa di lavori passati e recenti',
-}: WorkGallerySectionProps) {
+    headingText = 'Preview: Works + Series',
+}: MixedPreviewSectionProps) {
     const [masonryGap, setMasonryGap] = useState(MOBILE_MASONRY_GAP)
+    const [hoveredCta, setHoveredCta] = useState<'works' | 'series' | null>(null)
+    const showArchiveCta = sectionId === 'preview'
 
     // Gap diverso mobile/desktop per una resa visiva più equilibrata.
     useEffect(() => {
@@ -205,6 +207,80 @@ export default function WorkGallerySection({
                     <MasonryCard key={work._id} work={work} masonryGap={masonryGap} />
                 ))}
             </div>
+            {showArchiveCta && (
+                <div
+                    style={{
+                        marginTop: 'clamp(1.1rem, 2.8vw, 2.2rem)',
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                    }}
+                >
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.62rem' }}>
+                        <Link
+                            href="/works"
+                            onMouseEnter={() => setHoveredCta('works')}
+                            onMouseLeave={() => setHoveredCta(null)}
+                            style={{
+                                display: 'inline-flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-end',
+                                gap: '0.26rem',
+                                textDecoration: 'none',
+                                color: 'var(--ink)',
+                                cursor: 'none',
+                                letterSpacing: '0.11em',
+                                textTransform: 'uppercase',
+                                fontSize: 'clamp(0.66rem, 0.9vw, 0.78rem)',
+                                fontWeight: 600,
+                                lineHeight: 1.2,
+                            }}
+                        >
+                            <span>View Works Archive {'\u2192'}</span>
+                            <span
+                                style={{
+                                    width: '100%',
+                                    height: '2px',
+                                    background: 'rgba(26, 24, 20, 0.75)',
+                                    transformOrigin: 'left center',
+                                    transform: hoveredCta === 'works' ? 'scaleX(1)' : 'scaleX(0.45)',
+                                    transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                }}
+                            />
+                        </Link>
+                        <Link
+                            href="/series"
+                            onMouseEnter={() => setHoveredCta('series')}
+                            onMouseLeave={() => setHoveredCta(null)}
+                            style={{
+                                display: 'inline-flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-end',
+                                gap: '0.26rem',
+                                textDecoration: 'none',
+                                color: 'var(--ink)',
+                                cursor: 'none',
+                                letterSpacing: '0.11em',
+                                textTransform: 'uppercase',
+                                fontSize: 'clamp(0.66rem, 0.9vw, 0.78rem)',
+                                fontWeight: 600,
+                                lineHeight: 1.2,
+                            }}
+                        >
+                            <span>View Series Archive {'\u2192'}</span>
+                            <span
+                                style={{
+                                    width: '100%',
+                                    height: '2px',
+                                    background: 'rgba(26, 24, 20, 0.75)',
+                                    transformOrigin: 'left center',
+                                    transform: hoveredCta === 'series' ? 'scaleX(1)' : 'scaleX(0.45)',
+                                    transition: 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                }}
+                            />
+                        </Link>
+                    </div>
+                </div>
+            )}
         </section>
     )
 }

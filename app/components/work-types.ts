@@ -5,6 +5,7 @@ export interface SanityWork {
     title: string
     slug: { current: string }
     year: string
+    description?: string | null
     mainImage: {
         asset?: {
             _ref?: string
