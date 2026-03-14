@@ -4,22 +4,23 @@ import Link from 'next/link'
 import { useEffect, useState, type MouseEvent } from 'react'
 
 export default function Nav() {
-  const [heroExpandProgress, setHeroExpandProgress] = useState(0)
+  const [heroLightPhase, setHeroLightPhase] = useState(false)
   const [isPastHero, setIsPastHero] = useState(false)
-  const navIsLight = heroExpandProgress >= 0.985
-  const navTextColor = navIsLight && !isPastHero ? '#f7f4ef' : 'var(--ink)'
+  const shouldUseLightNav = heroLightPhase && !isPastHero
+  const navTextColor = shouldUseLightNav ? '#f7f4ef' : 'var(--ink)'
+  const navBorderColor = shouldUseLightNav ? 'rgba(247, 244, 239, 0.42)' : 'rgba(26,24,20,0.2)'
 
   useEffect(() => {
-    const handleHeroProgress = (event: Event) => {
-      const progress = (event as CustomEvent<number>).detail
-      if (typeof progress !== 'number') return
-      setHeroExpandProgress(progress)
+    const handleHeroLightPhase = (event: Event) => {
+      const lightPhase = (event as CustomEvent<boolean>).detail
+      if (typeof lightPhase !== 'boolean') return
+      setHeroLightPhase(lightPhase)
     }
 
-    window.addEventListener('hero-expand-progress', handleHeroProgress)
+    window.addEventListener('hero-light-phase', handleHeroLightPhase)
 
     return () => {
-      window.removeEventListener('hero-expand-progress', handleHeroProgress)
+      window.removeEventListener('hero-light-phase', handleHeroLightPhase)
     }
   }, [])
 
@@ -61,10 +62,9 @@ export default function Nav() {
       data-cursor-scope
       className="fixed top-0 left-0 right-0 z-50"
       style={{
-        // Nav trasparente — diventa leggibile grazie al mix con l'immagine hero
-        // Nessun background pesante, solo una linea sottile in basso
-        // Allineata alla riga Hero: stesso tono e opacità.
-        borderBottom: '1px solid rgba(26,24,20,0.2)'
+        borderBottom: `1px solid ${navBorderColor}`,
+        transition: 'border-color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
+        transitionDelay: shouldUseLightNav ? '220ms' : '0ms',
       }}
     >
       <div
@@ -80,12 +80,11 @@ export default function Nav() {
           <span style={{
             fontFamily: 'var(--font-cormorant)',
             fontSize: '1.1rem',
-            fontWeight: 500,
+            fontWeight: 'bold',
             letterSpacing: '0.45em',
             textTransform: 'uppercase',
             color: navTextColor,
             transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
-            transitionDelay: navIsLight ? '220ms' : '0ms',
           }}>
             GZG
           </span>
@@ -105,13 +104,12 @@ export default function Nav() {
                 onClick={(event) => handleSectionClick(event, item.href)}
                 style={{
                   fontSize: '0.58rem',
-                  fontWeight: 500,
+                  fontWeight: 'bold',
                   letterSpacing: '0.32em',
                   textTransform: 'uppercase',
                   color: navTextColor,
                   textDecoration: 'none',
                   transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
-                  transitionDelay: navIsLight ? '220ms' : '0ms',
                 }}
               >
                 {item.label}
@@ -137,7 +135,6 @@ export default function Nav() {
                   color: navTextColor,
                   textDecoration: 'none',
                   transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
-                  transitionDelay: navIsLight ? '220ms' : '0ms',
                 }}
               >
                 {item.label}

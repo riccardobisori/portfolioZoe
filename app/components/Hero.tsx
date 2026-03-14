@@ -24,12 +24,6 @@ export default function Hero({ heroImage }: HeroProps) {
     }, [expandProgress])
 
     useEffect(() => {
-        window.dispatchEvent(
-            new CustomEvent('hero-expand-progress', { detail: expandProgress })
-        )
-    }, [expandProgress])
-
-    useEffect(() => {
         const touchMediaQuery = window.matchMedia('(hover: none), (pointer: coarse)')
         const applyTouchMode = () => {
             const isTouch = touchMediaQuery.matches
@@ -141,11 +135,18 @@ export default function Hero({ heroImage }: HeroProps) {
         : null
 
     const showArrow = expandProgress >= 0.985
+
+    useEffect(() => {
+        window.dispatchEvent(
+            new CustomEvent('hero-light-phase', { detail: showArrow })
+        )
+    }, [showArrow])
+
     const revealProgress = showArrow ? 1 : expandProgress
     const curtainWidth = `${50 - revealProgress * 50}%`
     const progressValue = revealProgress.toFixed(4)
-    const authorIsLight = showArrow
-    const authorColor = showArrow ? 'rgb(247, 244, 239)' : 'var(--ink)'
+    const heroTextColor = showArrow ? 'rgb(247, 244, 239)' : 'var(--ink)'
+    const titleRuleColor = showArrow ? 'rgba(247, 244, 239, 0.42)' : 'rgba(26,24,20,0.2)'
     // Inset laterale allineato alla stessa gabbia visiva della riga orizzontale.
     const titleEdgeMargin = isTouchDevice ? 'clamp(1rem, 5vw, 1.5rem)' : 'clamp(2rem, 6vw, 5rem)'
     const resolvedTitleWidth = isTouchDevice
@@ -259,22 +260,21 @@ export default function Hero({ heroImage }: HeroProps) {
                             : 'clamp(3rem, 8vw, 6rem)',
                         width: isTouchDevice ? resolvedTitleWidth : 'fit-content',
                         willChange: 'left',
-                        // Wrapper unico per mantenere nome e titolo sullo stesso asse.
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: isTouchDevice ? 'flex-start' : 'center',
+                        color: heroTextColor,
+                        transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
+                        transitionDelay: showArrow ? '220ms' : '0ms',
+                        WebkitFontSmoothing: 'antialiased',
                     }}
                 >
                     <p style={{
                         fontSize: isTouchDevice ? '0.56rem' : '0.58rem',
                         letterSpacing: isTouchDevice ? '0.28em' : '0.45em',
                         textTransform: 'uppercase',
-                        color: authorColor,
+                        color: 'inherit',
                         marginBottom: isTouchDevice ? '0.95rem' : '1.25rem',
-                        animation: 'fadeUp 1s ease 1s forwards',
-                        transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
-                        transitionDelay: authorIsLight ? '220ms' : '0ms',
-                        // Coerente con il titolo centrato: evita disallineamenti durante la traslazione.
                         textAlign: 'left',
                         width: '100%',
                     }}>
@@ -288,19 +288,17 @@ export default function Hero({ heroImage }: HeroProps) {
                         fontWeight: 400,
                         letterSpacing: isTouchDevice ? '0.03em' : '0.05em',
                         lineHeight: isTouchDevice ? 1 : 1.05,
-                        color: 'var(--ink)',
+                        color: 'inherit',
                         textTransform: 'uppercase',
-                        // Centrato nel contenitore per mantenere simmetria durante il passaggio dx -> sx.
                         textAlign: isTouchDevice ? 'left' : 'center',
                         margin: 0,
                         width: '100%',
-                        mixBlendMode: 'difference',
                     }}>
                         Visual<br />
                         <span style={{
                             fontWeight: 400,
                             letterSpacing: '0.003em',
-                            color: 'var(--ink)',
+                            color: 'inherit',
                         }}>
                             Works
                         </span>
@@ -313,12 +311,11 @@ export default function Hero({ heroImage }: HeroProps) {
                         width: 'calc(100vw - clamp(4rem, 12vw, 10rem))',
                         marginInline: 'auto',
                         height: '2px',
-                        background: 'rgba(26,24,20,0.2)',
-                        animation: 'fadeIn 1s ease 1s forwards',
+                        background: titleRuleColor,
+                        transition: 'background-color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
                         zIndex: 2,
                         marginTop: '0.6rem',
-                        opacity: '0',
-                        mixBlendMode: 'difference',
+                        opacity: '1',
                     }}
                 />
             </div>
@@ -348,7 +345,7 @@ export default function Hero({ heroImage }: HeroProps) {
                     opacity: showArrow ? 1 : 0,
                     pointerEvents: showArrow ? 'auto' : 'none',
                     transition: 'opacity 0.35s ease',
-                    transitionDelay: showArrow ? '220ms' : '0ms',
+                    transitionDelay: showArrow ? '260ms' : '0ms',
                     zIndex: 6,
                     background: 'transparent',
                     animation: showArrow ? 'arrowFloat 1.3s ease-in-out infinite' : 'none',
