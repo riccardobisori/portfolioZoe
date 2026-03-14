@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from 'react'
 import { urlFor } from '@/sanity/lib/image'
 
 interface HeroProps {
@@ -21,6 +21,12 @@ export default function Hero({ heroImage }: HeroProps) {
 
     useEffect(() => {
         progressRef.current = expandProgress
+    }, [expandProgress])
+
+    useEffect(() => {
+        window.dispatchEvent(
+            new CustomEvent('hero-expand-progress', { detail: expandProgress })
+        )
     }, [expandProgress])
 
     useEffect(() => {
@@ -116,8 +122,9 @@ export default function Hero({ heroImage }: HeroProps) {
         }
     }, [scrollUnlocked])
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!titleRef.current) return
+        setTitleWidth(titleRef.current.getBoundingClientRect().width)
         const observer = new ResizeObserver((entries) => {
             const entry = entries[0]
             setTitleWidth(entry.contentRect.width)
@@ -137,6 +144,8 @@ export default function Hero({ heroImage }: HeroProps) {
     const revealProgress = showArrow ? 1 : expandProgress
     const curtainWidth = `${50 - revealProgress * 50}%`
     const progressValue = revealProgress.toFixed(4)
+    const authorIsLight = showArrow
+    const authorColor = showArrow ? 'rgb(247, 244, 239)' : 'var(--ink)'
     // Inset laterale allineato alla stessa gabbia visiva della riga orizzontale.
     const titleEdgeMargin = isTouchDevice ? 'clamp(1rem, 5vw, 1.5rem)' : 'clamp(2rem, 6vw, 5rem)'
     const resolvedTitleWidth = isTouchDevice
@@ -148,6 +157,7 @@ export default function Hero({ heroImage }: HeroProps) {
     const titleLeft = isTouchDevice
         ? titleEdgeMargin
         : `calc((1 - ${progressValue}) * (100vw - ${titleEdgeMargin} - ${resolvedTitleWidth}) + ${progressValue} * ${titleEdgeMargin})`
+    const lockTitleOnRight = !isTouchDevice && titleWidth === 0 && revealProgress < 0.02
     const handleArrowClick = (event: MouseEvent<HTMLAnchorElement>) => {
         event.preventDefault()
         setScrollUnlocked(true)
@@ -242,7 +252,8 @@ export default function Hero({ heroImage }: HeroProps) {
                     ref={titleRef}
                     style={{
                         position: 'absolute',
-                        left: titleLeft,
+                        left: lockTitleOnRight ? 'auto' : titleLeft,
+                        right: lockTitleOnRight ? titleEdgeMargin : 'auto',
                         bottom: isTouchDevice
                             ? 'calc(clamp(3.8rem, 9vw, 4.8rem) + env(safe-area-inset-bottom, 0px))'
                             : 'clamp(3rem, 8vw, 6rem)',
@@ -258,13 +269,14 @@ export default function Hero({ heroImage }: HeroProps) {
                         fontSize: isTouchDevice ? '0.56rem' : '0.58rem',
                         letterSpacing: isTouchDevice ? '0.28em' : '0.45em',
                         textTransform: 'uppercase',
-                        color: 'var(--ink)',
+                        color: authorColor,
                         marginBottom: isTouchDevice ? '0.95rem' : '1.25rem',
                         animation: 'fadeUp 1s ease 1s forwards',
+                        transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
+                        transitionDelay: authorIsLight ? '220ms' : '0ms',
                         // Coerente con il titolo centrato: evita disallineamenti durante la traslazione.
                         textAlign: 'left',
                         width: '100%',
-                        mixBlendMode: 'difference',
                     }}>
                         Ginevra Zoe Giannelli
                     </p>
@@ -323,19 +335,20 @@ export default function Hero({ heroImage }: HeroProps) {
                         ? 'calc(0.75rem + env(safe-area-inset-bottom, 0px))'
                         : 'clamp(1.25rem, 3vh, 2.5rem)',
                     transform: 'translateX(-50%)',
-                    width: isTouchDevice ? '44px' : '50px',
-                    height: isTouchDevice ? '44px' : '50px',
+                    width: isTouchDevice ? '56px' : '66px',
+                    height: isTouchDevice ? '56px' : '66px',
                     border: 0,
                     color: 'rgba(255,255,255,0.9)',
                     textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: isTouchDevice ? '1.55rem' : '1.8rem',
+                    fontSize: isTouchDevice ? '2rem' : '2.45rem',
                     lineHeight: 1,
                     opacity: showArrow ? 1 : 0,
                     pointerEvents: showArrow ? 'auto' : 'none',
                     transition: 'opacity 0.35s ease',
+                    transitionDelay: showArrow ? '220ms' : '0ms',
                     zIndex: 6,
                     background: 'transparent',
                     animation: showArrow ? 'arrowFloat 1.3s ease-in-out infinite' : 'none',
