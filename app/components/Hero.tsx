@@ -12,9 +12,11 @@ interface HeroProps {
 export default function Hero({ heroImage }: HeroProps) {
     const [expandProgress, setExpandProgress] = useState(0)
     const [scrollUnlocked, setScrollUnlocked] = useState(false)
+    const [titleWidth, setTitleWidth] = useState(0)
     // progressRef = valore renderizzato; targetRef = valore verso cui animiamo in modo fluido.
     const progressRef = useRef(0)
     const targetRef = useRef(0)
+    const titleRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         progressRef.current = expandProgress
@@ -90,6 +92,16 @@ export default function Hero({ heroImage }: HeroProps) {
         }
     }, [scrollUnlocked])
 
+    useEffect(() => {
+        if (!titleRef.current) return
+        const observer = new ResizeObserver((entries) => {
+            const entry = entries[0]
+            setTitleWidth(entry.contentRect.width)
+        })
+        observer.observe(titleRef.current)
+        return () => observer.disconnect()
+    }, [])
+
     // Costruiamo l'URL dell'immagine se esiste
     // width(1920) = risoluzione massima per schermi grandi
     // quality(90) = qualità alta ma non massima, bilancia peso e qualità
@@ -101,8 +113,11 @@ export default function Hero({ heroImage }: HeroProps) {
     const revealProgress = showArrow ? 1 : expandProgress
     const curtainWidth = `${50 - revealProgress * 50}%`
     const progressValue = revealProgress.toFixed(4)
+    // Inset laterale allineato alla stessa gabbia visiva della riga orizzontale.
+    const titleEdgeMargin = 'clamp(2rem, 6vw, 5rem)'
+    const resolvedTitleWidth = titleWidth > 0 ? `${titleWidth}px` : 'min(46vw, 560px)'
     // Sposta il blocco titolo da destra a sinistra mantenendo margini simmetrici.
-    const titleLeft = `calc((1 - ${progressValue}) * (100vw - clamp(2rem, 6vw, 5rem) - min(46vw, 560px)) + ${progressValue} * clamp(2rem, 6vw, 5rem))`
+    const titleLeft = `calc((1 - ${progressValue}) * (100vw - ${titleEdgeMargin} - ${resolvedTitleWidth}) + ${progressValue} * ${titleEdgeMargin})`
 
     return (
         <section
@@ -167,17 +182,22 @@ export default function Hero({ heroImage }: HeroProps) {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
-                padding: 'clamp(2rem, 6vw, 5rem)',
+                padding: 'clamp(1rem, 1vw, 3rem)',
                 paddingBottom: 'clamp(3rem, 8vw, 6rem)',
                 pointerEvents: 'none',
             }}>
                 <div
+                    ref={titleRef}
                     style={{
                         position: 'absolute',
                         left: titleLeft,
                         bottom: 'clamp(3rem, 8vw, 6rem)',
-                        width: 'min(46vw, 560px)',
+                        width: 'fit-content',
                         willChange: 'left',
+                        // Wrapper unico per mantenere nome e titolo sullo stesso asse.
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
                     }}
                 >
                     <p style={{
@@ -187,7 +207,9 @@ export default function Hero({ heroImage }: HeroProps) {
                         color: 'var(--ink)',
                         marginBottom: '1.25rem',
                         animation: 'fadeUp 1s ease 1s forwards',
-                        textAlign: 'center',
+                        // Coerente con il titolo centrato: evita disallineamenti durante la traslazione.
+                        textAlign: 'left',
+                        width: '100%',
                         mixBlendMode: 'difference',
                     }}>
                         Ginevra Zoe Giannelli
@@ -200,8 +222,10 @@ export default function Hero({ heroImage }: HeroProps) {
                         lineHeight: 1.05,
                         color: 'var(--ink)',
                         textTransform: 'uppercase',
+                        // Centrato nel contenitore per mantenere simmetria durante il passaggio dx -> sx.
                         textAlign: 'center',
                         margin: 0,
+                        width: '100%',
                         mixBlendMode: 'difference',
                     }}>
                         Visual<br />
@@ -219,6 +243,7 @@ export default function Hero({ heroImage }: HeroProps) {
                     className="hidden md:block"
                     style={{
                         width: 'calc(100vw - clamp(4rem, 12vw, 10rem))',
+                        marginInline: 'auto',
                         height: '2px',
                         background: 'rgba(26,24,20,0.2)',
                         animation: 'fadeIn 1s ease 1s forwards',

@@ -9,7 +9,8 @@ export default function Nav() {
       style={{
         // Nav trasparente — diventa leggibile grazie al mix con l'immagine hero
         // Nessun background pesante, solo una linea sottile in basso
-        borderBottom: '1px solid var(--ink)',
+        // Allineata alla riga Hero: stesso tono e opacità.
+        borderBottom: '1px solid rgba(26,24,20,0.2)'
       }}
     >
       <div className="flex items-center justify-between px-6 md:px-16 py-6 md:py-8">
@@ -22,9 +23,7 @@ export default function Nav() {
             fontWeight: 400,
             letterSpacing: '0.45em',
             textTransform: 'uppercase',
-            color: 'var(--ink)',
-            animation: 'fadeIn 1s ease 1s forwards',
-            opacity: '0'
+            color: 'var(--ink)'
           }}>
             GZG
           </span>
