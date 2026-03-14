@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { urlFor } from '@/sanity/lib/image'
 
 interface HeroProps {
@@ -118,6 +118,25 @@ export default function Hero({ heroImage }: HeroProps) {
     const resolvedTitleWidth = titleWidth > 0 ? `${titleWidth}px` : 'min(46vw, 560px)'
     // Sposta il blocco titolo da destra a sinistra mantenendo margini simmetrici.
     const titleLeft = `calc((1 - ${progressValue}) * (100vw - ${titleEdgeMargin} - ${resolvedTitleWidth}) + ${progressValue} * ${titleEdgeMargin})`
+    const handleArrowClick = (event: MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault()
+        setScrollUnlocked(true)
+
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                document.getElementById('works')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                })
+            })
+        })
+
+        window.history.replaceState(
+            null,
+            '',
+            `${window.location.pathname}${window.location.search}`
+        )
+    }
 
     return (
         <section
@@ -259,33 +278,45 @@ export default function Hero({ heroImage }: HeroProps) {
             <Link
                 href="#works"
                 aria-label="Vai alla sezione successiva"
-                onClick={() => setScrollUnlocked(true)}
+                onClick={handleArrowClick}
                 style={{
                     position: 'absolute',
                     left: '50%',
                     bottom: 'clamp(1.25rem, 3vh, 2.5rem)',
                     transform: 'translateX(-50%)',
-                    width: '54px',
-                    height: '54px',
-                    borderRadius: '999px',
-                    border: '1px solid rgba(255,255,255,0.85)',
-                    color: '#fff',
+                    width: '50px',
+                    height: '50px',
+                    border: 0,
+                    color: 'rgba(255,255,255,0.9)',
                     textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.55rem',
+                    fontSize: '1.8rem',
                     lineHeight: 1,
                     opacity: showArrow ? 1 : 0,
                     pointerEvents: showArrow ? 'auto' : 'none',
                     transition: 'opacity 0.35s ease',
                     zIndex: 6,
-                    background: 'rgba(0,0,0,0.28)',
-                    backdropFilter: 'blur(2px)',
+                    background: 'transparent',
+                    animation: showArrow ? 'arrowFloat 1.3s ease-in-out infinite' : 'none',
                 }}
             >
                 ↓
             </Link>
+            <style jsx>{`
+                @keyframes arrowFloat {
+                    0% {
+                        transform: translateX(-50%) translateY(0);
+                    }
+                    50% {
+                        transform: translateX(-50%) translateY(8px);
+                    }
+                    100% {
+                        transform: translateX(-50%) translateY(0);
+                    }
+                }
+            `}</style>
         </section>
     )
 }

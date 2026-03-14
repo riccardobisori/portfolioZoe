@@ -1,8 +1,26 @@
 'use client'
 
 import Link from 'next/link'
+import { type MouseEvent } from 'react'
 
 export default function Nav() {
+  const handleSectionClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (!href.startsWith('#')) return
+
+    const targetId = href.slice(1)
+    const target = document.getElementById(targetId)
+    if (!target) return
+
+    event.preventDefault()
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}${window.location.search}`
+    )
+  }
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50"
@@ -40,6 +58,7 @@ export default function Nav() {
             <li key={item.href}>
               <Link
                 href={item.href}
+                onClick={(event) => handleSectionClick(event, item.href)}
                 style={{
                   fontSize: '0.58rem',
                   letterSpacing: '0.32em',
