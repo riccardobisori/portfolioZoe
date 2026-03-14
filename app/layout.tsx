@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, Montserrat, Bruno_Ace_SC, Google_Sans_Code } from 'next/font/google'
 import './globals.css'
+import Cursors from './components/Cursors'
 
 // Use `next/font` to self-host Google fonts and expose them as CSS variables.
 // CSS variables let us switch fonts in CSS/components without re-plumbing props.
@@ -41,6 +42,7 @@ export default function RootLayout({
     <html lang="it" className={`${cormorant.variable} ${montserrat.variable} ${brunoAceSC.variable}`}>
       {/* Inline font-family ensures a sane default without depending on component-level styles. */}
       <body style={{ fontFamily: 'var(--font-montserrat), sans-serif' }}>
+        <Cursors />
         {children}
       </body>
     </html>

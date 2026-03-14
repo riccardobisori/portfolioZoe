@@ -2,25 +2,27 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import type { SanityWork } from './Works'
+import type { WorkWithUrl } from './work-types'
 
-interface WorkWithUrl extends SanityWork {
-    imageUrl: string | null
-    isLandscape?: boolean
+// Props riusabili sia per preview home sia per pagina /works.
+interface WorkGallerySectionProps {
+    works: WorkWithUrl[]
+    sectionId?: string
+    headingText?: string
 }
 
 const MOBILE_MASONRY_GAP = 8
 const DESKTOP_MASONRY_GAP = 10
 
-// ── SINGOLA CARD MASONRY ──────────────────────────────────────────────────
+// Singola card della griglia masonry.
 function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: number }) {
     const cardRef = useRef<HTMLAnchorElement>(null)
     const contentRef = useRef<HTMLDivElement>(null)
     const [hovered, setHovered] = useState(false)
     const [isLandscape, setIsLandscape] = useState(work.isLandscape || false)
-    const [rowSpan, setRowSpan] = useState(200) // Default fallback prima del caricamento
+    const [rowSpan, setRowSpan] = useState(200)
 
-    // Scroll-reveal: la card appare quando entra nel viewport
+    // Reveal on scroll: aggiunge classe "visible" quando la card entra in viewport.
     useEffect(() => {
         const el = cardRef.current
         if (!el) return
@@ -37,15 +39,13 @@ function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: numb
         return () => observer.disconnect()
     }, [])
 
-    // Calcola dinamicamente l'altezza in righe (grid-auto-rows: 1px)
+    // Calcola lo span verticale reale in base all'altezza renderizzata dell'immagine.
     useEffect(() => {
         if (!contentRef.current) return
 
         const resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
-                // Calcoliamo l'altezza reale del contenuto
                 const height = entry.target.getBoundingClientRect().height
-                // Aggiungiamo il gap verticale così ogni card respira nella masonry
                 setRowSpan(Math.ceil(height) + masonryGap)
             }
         })
@@ -65,18 +65,13 @@ function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: numb
                 cursor: 'none',
                 textDecoration: 'none',
                 color: 'inherit',
-                // Occupa 2 colonne se orizzontale, 1 se verticale
                 gridColumn: isLandscape ? 'span 2' : 'span 1',
-                // Occupa tante righe (da 1px) quanta è l'altezza reale + gap
                 gridRowEnd: `span ${rowSpan}`,
             }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
         >
-            <div
-                ref={contentRef}
-                style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}
-            >
+            <div ref={contentRef} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
                 {work.imageUrl && (
                     <img
                         src={work.imageUrl}
@@ -91,46 +86,51 @@ function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: numb
                             display: 'block',
                             borderRadius: '8px',
                             transform: hovered ? 'scale(1.03)' : 'scale(1)',
-                            transition: 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)'
+                            transition: 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
                         }}
                     />
                 )}
 
-                {/* Overlay hover */}
-                <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'rgba(26,24,20,0.5)',
-                    opacity: hovered ? 1 : 0,
-                    transition: 'opacity 0.4s ease',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                }}>
-                    <span style={{
-                        fontFamily: 'var(--font-brunoaceSC)',
-                        fontSize: 'clamp(1.5rem, 2.5vw, 2.5rem)',
-                        fontWeight: 400,
-                        fontStyle: 'italic',
-                        color: 'var(--cream)',
-                        letterSpacing: '0.01em',
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(26,24,20,0.5)',
                         opacity: hovered ? 1 : 0,
-                        transform: hovered ? 'translateY(0)' : 'translateY(10px)',
-                        transition: 'opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s',
-                    }}>
+                        transition: 'opacity 0.4s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                    }}
+                >
+                    <span
+                        style={{
+                            fontFamily: 'var(--font-brunoaceSC)',
+                            fontSize: 'clamp(1.5rem, 2.5vw, 2.5rem)',
+                            fontWeight: 400,
+                            fontStyle: 'italic',
+                            color: 'var(--cream)',
+                            letterSpacing: '0.01em',
+                            opacity: hovered ? 1 : 0,
+                            transform: hovered ? 'translateY(0)' : 'translateY(10px)',
+                            transition: 'opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s',
+                        }}
+                    >
                         {work.category?.title}
                     </span>
-                    <span style={{
-                        fontSize: '0.48rem',
-                        letterSpacing: '0.4em',
-                        textTransform: 'uppercase',
-                        color: 'rgba(244,240,235,0.55)',
-                        opacity: hovered ? 1 : 0,
-                        transform: hovered ? 'translateY(0)' : 'translateY(6px)',
-                        transition: 'opacity 0.35s ease 0.1s, transform 0.35s ease 0.1s',
-                    }}>
+                    <span
+                        style={{
+                            fontSize: '0.48rem',
+                            letterSpacing: '0.4em',
+                            textTransform: 'uppercase',
+                            color: 'rgba(244,240,235,0.55)',
+                            opacity: hovered ? 1 : 0,
+                            transform: hovered ? 'translateY(0)' : 'translateY(6px)',
+                            transition: 'opacity 0.35s ease 0.1s, transform 0.35s ease 0.1s',
+                        }}
+                    >
                         {work.title}
                     </span>
                 </div>
@@ -139,12 +139,16 @@ function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: numb
     )
 }
 
-// ── COMPONENTE PRINCIPALE ─────────────────────────────────────────────────
-export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
+// Sezione gallery generica: stessa UI, contenuti diversi a seconda della pagina.
+export default function WorkGallerySection({
+    works,
+    sectionId = 'preview',
+    headingText = 'Preview: selezione sparsa di lavori passati e recenti',
+}: WorkGallerySectionProps) {
     const [masonryGap, setMasonryGap] = useState(MOBILE_MASONRY_GAP)
 
+    // Gap diverso mobile/desktop per una resa visiva più equilibrata.
     useEffect(() => {
-        // Gap responsivo: su desktop teniamo una spaziatura leggermente diversa.
         const mediaQuery = window.matchMedia('(min-width: 1024px)')
         const updateGap = () => {
             setMasonryGap(mediaQuery.matches ? DESKTOP_MASONRY_GAP : MOBILE_MASONRY_GAP)
@@ -159,11 +163,11 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
 
     return (
         <section
-            id="works"
+            id={sectionId}
             data-cursor-scope
             style={{
                 width: '100%',
-                paddingTop: '80px',
+                paddingTop: '58px',
                 paddingBottom: '20px',
                 paddingLeft: 'clamp(16px, 3vw, 48px)',
                 paddingRight: 'clamp(16px, 3vw, 48px)',
@@ -172,30 +176,32 @@ export default function WorksClient({ works }: { works: WorkWithUrl[] }) {
             <h2
                 style={{
                     margin: 0,
-                    marginBottom: 'clamp(32px, 6vw, 72px)',
+                    marginBottom: 'clamp(16px, 3vw, 30px)',
+                    marginLeft: 'auto',
+                    width: 'fit-content',
                     fontFamily: 'var(--font-monserrat)',
-                    fontSize: 'clamp(2.8rem, 9vw, 8rem)',
-                    lineHeight: 0.95,
+                    fontSize: 'clamp(0.85rem, 1.35vw, 1.05rem)',
+                    lineHeight: 1.2,
                     letterSpacing: '0.02em',
                     color: 'var(--charcoal)',
+                    textAlign: 'right',
                 }}
             >
-                INTRO
+                {headingText}
             </h2>
             <div
                 style={{
                     display: 'grid',
                     width: '100%',
                     gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                    // riga base di 1px, in questo modo lo span equivale ai pixel in altezza!
+                    // Righe da 1px: ci permette di pilotare altezza card via rowSpan.
                     gridAutoRows: '1px',
-                    // l'algoritmo 'dense' riempie gli spazi vuoti lasciati dalle altezze sfalsate
+                    // "dense" prova a riempire i buchi lasciati da elementi più alti.
                     gridAutoFlow: 'dense',
                     columnGap: `${masonryGap}px`,
-                    // non usiamo gap o rowGap verticalmente perché usiamo lo span per lo spazio
                 }}
             >
-                {works.map(work => (
+                {works.map((work) => (
                     <MasonryCard key={work._id} work={work} masonryGap={masonryGap} />
                 ))}
             </div>

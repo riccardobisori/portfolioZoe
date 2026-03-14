@@ -51,7 +51,7 @@ export default function Nav() {
         {/* Link di navigazione — bianchi su hero scuro */}
         <ul className="hidden md:flex gap-10 list-none">
           {[
-            { label: 'Works', href: '#works' },
+            { label: 'Works', href: '/works' },
             { label: 'About', href: '#about' },
             { label: 'Series', href: '#categories' },
             { label: 'Contact', href: '#contact' },

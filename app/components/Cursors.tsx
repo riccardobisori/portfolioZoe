@@ -17,8 +17,23 @@ export default function Cursor() {
     const rafRef = useRef<number>(0)
 
     useEffect(() => {
+        const setCustomCursorVisible = (isVisible: boolean) => {
+            visibleRef.current = isVisible
+            if (cursorRef.current) {
+                cursorRef.current.style.opacity = isVisible ? '1' : '0'
+            }
+            if (trailRef.current) {
+                if (!isVisible) {
+                    trailRef.current.style.opacity = '0'
+                    return
+                }
+                trailRef.current.style.opacity = hoveredRef.current ? '0.9' : '0.7'
+            }
+        }
+
         const onMouseMove = (e: MouseEvent) => {
             targetRef.current = { x: e.clientX, y: e.clientY }
+            if (!visibleRef.current) setCustomCursorVisible(true)
         }
 
         const onMouseOver = (e: MouseEvent) => {
@@ -55,6 +70,10 @@ export default function Cursor() {
 
         const lerp = (start: number, end: number, amount: number) => start + (end - start) * amount
 
+        const onDocumentMouseLeave = () => setCustomCursorVisible(false)
+        const onDocumentMouseEnter = () => setCustomCursorVisible(true)
+        const onWindowBlur = () => setCustomCursorVisible(false)
+
         const tick = () => {
             const cursor = cursorRef.current
             const trail = trailRef.current
@@ -68,22 +87,23 @@ export default function Cursor() {
                 cursor.style.top = `${currentRef.current.y}px`
                 trail.style.left = `${trailCurrentRef.current.x}px`
                 trail.style.top = `${trailCurrentRef.current.y}px`
-                if (!visibleRef.current) {
-                    visibleRef.current = true
-                    cursor.style.opacity = '1'
-                    trail.style.opacity = '0.7'
-                }
             }
             rafRef.current = requestAnimationFrame(tick)
         }
 
         window.addEventListener('mousemove', onMouseMove)
+        window.addEventListener('blur', onWindowBlur)
         document.addEventListener('mouseover', onMouseOver)
+        document.addEventListener('mouseleave', onDocumentMouseLeave)
+        document.addEventListener('mouseenter', onDocumentMouseEnter)
         rafRef.current = requestAnimationFrame(tick)
 
         return () => {
             window.removeEventListener('mousemove', onMouseMove)
+            window.removeEventListener('blur', onWindowBlur)
             document.removeEventListener('mouseover', onMouseOver)
+            document.removeEventListener('mouseleave', onDocumentMouseLeave)
+            document.removeEventListener('mouseenter', onDocumentMouseEnter)
             cancelAnimationFrame(rafRef.current)
         }
     }, [])

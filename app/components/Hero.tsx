@@ -124,7 +124,7 @@ export default function Hero({ heroImage }: HeroProps) {
 
         window.requestAnimationFrame(() => {
             window.requestAnimationFrame(() => {
-                document.getElementById('works')?.scrollIntoView({
+                document.getElementById('preview')?.scrollIntoView({
                     behavior: 'smooth',
                     block: 'start',
                 })
@@ -277,7 +277,7 @@ export default function Hero({ heroImage }: HeroProps) {
 
             {/* Freccia: compare solo quando l'immagine ha riempito tutto */}
             <Link
-                href="#works"
+                href="#preview"
                 aria-label="Vai alla sezione successiva"
                 onClick={handleArrowClick}
                 style={{
