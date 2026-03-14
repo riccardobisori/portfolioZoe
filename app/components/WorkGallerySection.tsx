@@ -84,7 +84,7 @@ function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: numb
                             width: '100%',
                             height: 'auto',
                             display: 'block',
-                            borderRadius: '8px',
+                            borderRadius: '2px',
                             transform: hovered ? 'scale(1.03)' : 'scale(1)',
                             transition: 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
                         }}

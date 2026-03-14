@@ -32,7 +32,7 @@ export default function Nav() {
         borderBottom: '1px solid rgba(26,24,20,0.2)'
       }}
     >
-      <div className="flex items-center justify-between px-6 md:px-16 py-6 md:py-8">
+      <div className="flex items-center justify-between px-4 md:px-16 py-4 md:py-8">
 
         {/* Logo — solo iniziali, bold, display font */}
         <Link href="/" style={{ textDecoration: 'none' }}>
@@ -73,6 +73,29 @@ export default function Nav() {
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.color = 'var(--ink)'
+                }}
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <ul className="flex md:hidden items-center gap-5 list-none">
+          {[
+            { label: 'Works', href: '/works' },
+            { label: 'Contact', href: '#contact' },
+          ].map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                onClick={(event) => handleSectionClick(event, item.href)}
+                style={{
+                  fontSize: '0.54rem',
+                  letterSpacing: '0.24em',
+                  textTransform: 'uppercase',
+                  color: 'var(--ink)',
+                  textDecoration: 'none',
                 }}
               >
                 {item.label}

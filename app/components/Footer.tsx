@@ -11,8 +11,8 @@ export default function Footer() {
             style={{
                 marginTop: 'clamp(1.25rem, 3.8vw, 3.5rem)',
                 paddingTop: 'clamp(3rem, 7vw, 6rem)',
-                paddingBottom: 'clamp(2rem, 5vw, 4rem)',
-                paddingInline: 'clamp(1.25rem, 4vw, 3.25rem)',
+                paddingBottom: 'calc(clamp(2rem, 5vw, 4rem) + env(safe-area-inset-bottom, 0px))',
+                paddingInline: 'clamp(1rem, 4vw, 3.25rem)',
                 backgroundColor: '#0A0A0A',
                 borderTop: '1px solid rgba(244,240,235,0.14)',
             }}
@@ -24,11 +24,11 @@ export default function Footer() {
                 <div className="md:col-span-5">
                     <p
                         style={{
-                            fontSize: '0.55rem',
-                            letterSpacing: '0.35em',
+                            fontSize: 'clamp(0.56rem, 1.9vw, 0.62rem)',
+                            letterSpacing: '0.3em',
                             textTransform: 'uppercase',
                             color: 'rgba(244,240,235,0.45)',
-                            marginBottom: '1.25rem',
+                            marginBottom: '1rem',
                         }}
                     >
                         Studio
@@ -48,9 +48,9 @@ export default function Footer() {
                     <p
                         style={{
                             maxWidth: '34ch',
-                            fontSize: '0.62rem',
-                            lineHeight: 2,
-                            letterSpacing: '0.12em',
+                            fontSize: 'clamp(0.72rem, 2.5vw, 0.8rem)',
+                            lineHeight: 1.9,
+                            letterSpacing: '0.08em',
                             color: 'rgba(244,240,235,0.58)',
                         }}
                     >
@@ -61,8 +61,8 @@ export default function Footer() {
                 <div className="md:col-span-2">
                     <p
                         style={{
-                            fontSize: '0.55rem',
-                            letterSpacing: '0.35em',
+                            fontSize: 'clamp(0.56rem, 1.9vw, 0.62rem)',
+                            letterSpacing: '0.3em',
                             textTransform: 'uppercase',
                             color: 'rgba(244,240,235,0.45)',
                             marginBottom: '1rem',
@@ -80,8 +80,8 @@ export default function Footer() {
                                 <a
                                     href={item.href}
                                     style={{
-                                        fontSize: '0.6rem',
-                                        letterSpacing: '0.14em',
+                                        fontSize: 'clamp(0.74rem, 2.4vw, 0.82rem)',
+                                        letterSpacing: '0.08em',
                                         color: 'rgba(244,240,235,0.74)',
                                         textDecoration: 'none',
                                     }}
@@ -96,8 +96,8 @@ export default function Footer() {
                 <div className="md:col-span-2">
                     <p
                         style={{
-                            fontSize: '0.55rem',
-                            letterSpacing: '0.35em',
+                            fontSize: 'clamp(0.56rem, 1.9vw, 0.62rem)',
+                            letterSpacing: '0.3em',
                             textTransform: 'uppercase',
                             color: 'rgba(244,240,235,0.45)',
                             marginBottom: '1rem',
@@ -116,8 +116,8 @@ export default function Footer() {
                                 <Link
                                     href={item.href}
                                     style={{
-                                        fontSize: '0.6rem',
-                                        letterSpacing: '0.2em',
+                                        fontSize: 'clamp(0.74rem, 2.4vw, 0.82rem)',
+                                        letterSpacing: '0.12em',
                                         textTransform: 'uppercase',
                                         color: 'rgba(244,240,235,0.74)',
                                         textDecoration: 'none',
@@ -133,8 +133,8 @@ export default function Footer() {
                 <div className="md:col-span-3">
                     <p
                         style={{
-                            fontSize: '0.55rem',
-                            letterSpacing: '0.35em',
+                            fontSize: 'clamp(0.56rem, 1.9vw, 0.62rem)',
+                            letterSpacing: '0.3em',
                             textTransform: 'uppercase',
                             color: 'rgba(244,240,235,0.45)',
                             marginBottom: '1rem',
@@ -154,8 +154,8 @@ export default function Footer() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     style={{
-                                        fontSize: '0.6rem',
-                                        letterSpacing: '0.2em',
+                                        fontSize: 'clamp(0.74rem, 2.4vw, 0.82rem)',
+                                        letterSpacing: '0.12em',
                                         textTransform: 'uppercase',
                                         color: 'rgba(244,240,235,0.74)',
                                         textDecoration: 'none',
@@ -175,8 +175,8 @@ export default function Footer() {
             >
                 <span
                     style={{
-                        fontSize: '0.55rem',
-                        letterSpacing: '0.2em',
+                        fontSize: 'clamp(0.58rem, 2vw, 0.64rem)',
+                        letterSpacing: '0.18em',
                         color: 'rgba(244,240,235,0.45)',
                         textTransform: 'uppercase',
                     }}
@@ -186,8 +186,8 @@ export default function Footer() {
                 <Link
                     href="/#top"
                     style={{
-                        fontSize: '0.55rem',
-                        letterSpacing: '0.28em',
+                        fontSize: 'clamp(0.58rem, 2vw, 0.64rem)',
+                        letterSpacing: '0.22em',
                         textTransform: 'uppercase',
                         color: 'rgba(244,240,235,0.72)',
                         textDecoration: 'none',

@@ -12,6 +12,7 @@ interface HeroProps {
 export default function Hero({ heroImage }: HeroProps) {
     const [expandProgress, setExpandProgress] = useState(0)
     const [scrollUnlocked, setScrollUnlocked] = useState(false)
+    const [isTouchDevice, setIsTouchDevice] = useState(false)
     const [titleWidth, setTitleWidth] = useState(0)
     // progressRef = valore renderizzato; targetRef = valore verso cui animiamo in modo fluido.
     const progressRef = useRef(0)
@@ -23,9 +24,32 @@ export default function Hero({ heroImage }: HeroProps) {
     }, [expandProgress])
 
     useEffect(() => {
+        const touchMediaQuery = window.matchMedia('(hover: none), (pointer: coarse)')
+        const applyTouchMode = () => {
+            const isTouch = touchMediaQuery.matches
+            setIsTouchDevice(isTouch)
+
+            if (!isTouch) return
+
+            // Su touch non c'è wheel: partiamo già in stato "sbloccato"
+            // per non bloccare la pagina nella Hero.
+            targetRef.current = 1
+            progressRef.current = 1
+            setExpandProgress(1)
+            setScrollUnlocked(true)
+        }
+
+        applyTouchMode()
+        touchMediaQuery.addEventListener('change', applyTouchMode)
+
+        return () => touchMediaQuery.removeEventListener('change', applyTouchMode)
+    }, [])
+
+    useEffect(() => {
         const SCROLL_TO_PROGRESS = 0.001
 
         const onWheel = (event: WheelEvent) => {
+            if (isTouchDevice) return
             if (scrollUnlocked) return
 
             const current = progressRef.current
@@ -52,7 +76,7 @@ export default function Hero({ heroImage }: HeroProps) {
 
         window.addEventListener('wheel', onWheel, { passive: false })
         return () => window.removeEventListener('wheel', onWheel)
-    }, [scrollUnlocked])
+    }, [isTouchDevice, scrollUnlocked])
 
     useEffect(() => {
         let raf = 0
@@ -114,10 +138,16 @@ export default function Hero({ heroImage }: HeroProps) {
     const curtainWidth = `${50 - revealProgress * 50}%`
     const progressValue = revealProgress.toFixed(4)
     // Inset laterale allineato alla stessa gabbia visiva della riga orizzontale.
-    const titleEdgeMargin = 'clamp(2rem, 6vw, 5rem)'
-    const resolvedTitleWidth = titleWidth > 0 ? `${titleWidth}px` : 'min(46vw, 560px)'
+    const titleEdgeMargin = isTouchDevice ? 'clamp(1rem, 5vw, 1.5rem)' : 'clamp(2rem, 6vw, 5rem)'
+    const resolvedTitleWidth = isTouchDevice
+        ? 'min(82vw, 420px)'
+        : titleWidth > 0
+            ? `${titleWidth}px`
+            : 'min(46vw, 560px)'
     // Sposta il blocco titolo da destra a sinistra mantenendo margini simmetrici.
-    const titleLeft = `calc((1 - ${progressValue}) * (100vw - ${titleEdgeMargin} - ${resolvedTitleWidth}) + ${progressValue} * ${titleEdgeMargin})`
+    const titleLeft = isTouchDevice
+        ? titleEdgeMargin
+        : `calc((1 - ${progressValue}) * (100vw - ${titleEdgeMargin} - ${resolvedTitleWidth}) + ${progressValue} * ${titleEdgeMargin})`
     const handleArrowClick = (event: MouseEvent<HTMLAnchorElement>) => {
         event.preventDefault()
         setScrollUnlocked(true)
@@ -144,7 +174,7 @@ export default function Hero({ heroImage }: HeroProps) {
             style={{
                 position: 'relative',
                 width: '100%',
-                height: '100vh',
+                height: isTouchDevice ? '100svh' : '100vh',
                 overflow: 'hidden',
                 background: '#fff',
             }}
@@ -203,7 +233,9 @@ export default function Hero({ heroImage }: HeroProps) {
                 flexDirection: 'column',
                 justifyContent: 'flex-end',
                 padding: 'clamp(1rem, 1vw, 3rem)',
-                paddingBottom: 'clamp(3rem, 8vw, 6rem)',
+                paddingBottom: isTouchDevice
+                    ? 'calc(clamp(1.25rem, 5vw, 2rem) + env(safe-area-inset-bottom, 0px))'
+                    : 'clamp(3rem, 8vw, 6rem)',
                 pointerEvents: 'auto',
             }}>
                 <div
@@ -211,21 +243,23 @@ export default function Hero({ heroImage }: HeroProps) {
                     style={{
                         position: 'absolute',
                         left: titleLeft,
-                        bottom: 'clamp(3rem, 8vw, 6rem)',
-                        width: 'fit-content',
+                        bottom: isTouchDevice
+                            ? 'calc(clamp(3.8rem, 9vw, 4.8rem) + env(safe-area-inset-bottom, 0px))'
+                            : 'clamp(3rem, 8vw, 6rem)',
+                        width: isTouchDevice ? resolvedTitleWidth : 'fit-content',
                         willChange: 'left',
                         // Wrapper unico per mantenere nome e titolo sullo stesso asse.
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
+                        alignItems: isTouchDevice ? 'flex-start' : 'center',
                     }}
                 >
                     <p style={{
-                        fontSize: '0.58rem',
-                        letterSpacing: '0.45em',
+                        fontSize: isTouchDevice ? '0.56rem' : '0.58rem',
+                        letterSpacing: isTouchDevice ? '0.28em' : '0.45em',
                         textTransform: 'uppercase',
                         color: 'var(--ink)',
-                        marginBottom: '1.25rem',
+                        marginBottom: isTouchDevice ? '0.95rem' : '1.25rem',
                         animation: 'fadeUp 1s ease 1s forwards',
                         // Coerente con il titolo centrato: evita disallineamenti durante la traslazione.
                         textAlign: 'left',
@@ -236,14 +270,16 @@ export default function Hero({ heroImage }: HeroProps) {
                     </p>
 
                     <h1 style={{
-                        fontSize: 'clamp(3.5rem, 6vw, 7rem)',
+                        fontSize: isTouchDevice
+                            ? 'clamp(2.2rem, 13vw, 3.6rem)'
+                            : 'clamp(3.5rem, 6vw, 7rem)',
                         fontWeight: 400,
-                        letterSpacing: '0.05em',
-                        lineHeight: 1.05,
+                        letterSpacing: isTouchDevice ? '0.03em' : '0.05em',
+                        lineHeight: isTouchDevice ? 1 : 1.05,
                         color: 'var(--ink)',
                         textTransform: 'uppercase',
                         // Centrato nel contenitore per mantenere simmetria durante il passaggio dx -> sx.
-                        textAlign: 'center',
+                        textAlign: isTouchDevice ? 'left' : 'center',
                         margin: 0,
                         width: '100%',
                         mixBlendMode: 'difference',
@@ -283,17 +319,19 @@ export default function Hero({ heroImage }: HeroProps) {
                 style={{
                     position: 'absolute',
                     left: '50%',
-                    bottom: 'clamp(1.25rem, 3vh, 2.5rem)',
+                    bottom: isTouchDevice
+                        ? 'calc(0.75rem + env(safe-area-inset-bottom, 0px))'
+                        : 'clamp(1.25rem, 3vh, 2.5rem)',
                     transform: 'translateX(-50%)',
-                    width: '50px',
-                    height: '50px',
+                    width: isTouchDevice ? '44px' : '50px',
+                    height: isTouchDevice ? '44px' : '50px',
                     border: 0,
                     color: 'rgba(255,255,255,0.9)',
                     textDecoration: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.8rem',
+                    fontSize: isTouchDevice ? '1.55rem' : '1.8rem',
                     lineHeight: 1,
                     opacity: showArrow ? 1 : 0,
                     pointerEvents: showArrow ? 'auto' : 'none',
