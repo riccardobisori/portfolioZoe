@@ -5,8 +5,8 @@ import { useEffect, useState, type MouseEvent } from 'react'
 
 export default function Nav() {
   const navItems = [
-    { label: 'Works', href: '/works' },
     { label: 'Series', href: '/series' },
+    { label: 'Works', href: '/works' },
     { label: 'About', href: '#about' },
     { label: 'Contact', href: '#contact' },
   ]

@@ -194,12 +194,13 @@ const MOODBOARD_SLOTS = [
 
 const MOODBOARD_BASE_HEIGHT = 1800
 const MOODBOARD_ROW_HEIGHT = 600
+const MOODBOARD_ROW_OFFSET = 490
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-function snap(value: number, step = 1) {
+function snap(value: number, step = 0.5) {
   return Math.round(value / step) * step
 }
 
@@ -283,6 +284,12 @@ function getDesktopScenePadding(viewportWidth: number) {
     left: sectionPadding + canvasLeftSafe,
     right: sectionPadding + canvasRightSafe,
   }
+}
+
+function getDesktopScale(viewportWidth: number) {
+  // Allineato al runtime frontend: sotto 1920 riduciamo il canvas,
+  // con un floor per evitare composizioni troppo compresse.
+  return clamp(viewportWidth / 1920, 0.68, 1)
 }
 
 type ActiveAutoPlacement = {
@@ -460,7 +467,11 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
       const shouldUseManual = cards.some((card) => isManualLayout(card.previewLayout, activeBreakpoint))
       const arrangedCards = shouldUseManual ? cards : arrangeForMoodboard(cards)
       const rows = Math.ceil(Math.max(arrangedCards.length, 1) / MOODBOARD_SLOTS.length)
-      const desktopHeight = MOODBOARD_BASE_HEIGHT + Math.max(rows - 1, 0) * MOODBOARD_ROW_HEIGHT
+      const desktopScale = getDesktopScale(viewportWidth)
+      const scaledBaseHeight = Math.round(MOODBOARD_BASE_HEIGHT * desktopScale)
+      const scaledRowHeight = Math.round(MOODBOARD_ROW_HEIGHT * desktopScale)
+      const scaledRowOffset = Math.round(MOODBOARD_ROW_OFFSET * desktopScale)
+      const desktopHeight = scaledBaseHeight + Math.max(rows - 1, 0) * scaledRowHeight
 
       const cardsWithCurrent = arrangedCards.map((item, idx) => {
           const layout = resolveLayout(item, idx)
@@ -488,7 +499,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             preferred: layout.preferred,
             aspectRatio:
               getImageAspectRatioFromRef(cardImage?.asset?._ref) ?? getPreviewAspectRatio(layout.preferred),
-            topPx: manual ? undefined : (slot.top / 100) * desktopHeight + row * 490,
+            topPx: manual ? undefined : (slot.top / 100) * desktopHeight + row * scaledRowOffset,
             offsetX: baseOffset.offsetX,
             offsetY: baseOffset.offsetY,
             manual,
@@ -528,7 +539,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     return () => {
       cancelled = true
     }
-  }, [activeBreakpoint, client, currentDocumentId, documentValue?.image, documentValue?.previewLayout, documentValue?.project?._ref])
+  }, [activeBreakpoint, client, currentDocumentId, documentValue?.image, documentValue?.previewLayout, documentValue?.project?._ref, viewportWidth])
 
   const BASE_CANVAS_WIDTH = viewportWidth
   const BASE_CANVAS_HEIGHT = Math.round(logicalCanvasHeight * canvasHeightScale)
@@ -592,13 +603,13 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
         setIfMissing({}, [...pathPrefix]),
       ]
       if (typeof nextValues.x === 'number')
-        patches.push(set(snap(clamp(nextValues.x, 0, 90)), [...pathPrefix, 'x']))
+        patches.push(set(snap(clamp(nextValues.x, 0, 90), 0.5), [...pathPrefix, 'x']))
       if (typeof nextValues.y === 'number')
-        patches.push(set(snap(clamp(nextValues.y, 0, 95)), [...pathPrefix, 'y']))
+        patches.push(set(snap(clamp(nextValues.y, 0, 95), 0.5), [...pathPrefix, 'y']))
       if (typeof nextValues.width === 'number')
-        patches.push(set(snap(clamp(nextValues.width, 10, 45)), [...pathPrefix, 'width']))
+        patches.push(set(snap(clamp(nextValues.width, 10, 45), 0.5), [...pathPrefix, 'width']))
       if (typeof nextValues.z === 'number')
-        patches.push(set(snap(clamp(nextValues.z, 1, 10)), [...pathPrefix, 'z']))
+        patches.push(set(snap(clamp(nextValues.z, 1, 10), 1), [...pathPrefix, 'z']))
       if (nextValues.preferred) patches.push(set(nextValues.preferred, [...pathPrefix, 'preferred']))
       if (patches.length > 0) props.onChange(PatchEvent.from(patches))
     },
@@ -736,7 +747,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
   const handleCanvasKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {
       const { key, altKey, shiftKey } = event
-      const moveStep = shiftKey ? 2 : 1
+      const moveStep = shiftKey ? 1 : 0.5
       let handled = true
 
       if (altKey) {
@@ -797,7 +808,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             Trascina la card per spostarla e usa il quadratino in basso a destra per ridimensionarla.
           </Text>
           <Text size={1} muted>
-            Lo snap e i limiti sono applicati automaticamente (X: 0-90, Y: 0-95, Width: 10-45).
+            Lo snap e i limiti sono applicati automaticamente (X/Y/Width a step 0.5; Z a step 1).
           </Text>
         </Stack>
       </Card>
@@ -808,22 +819,22 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             <Button
               mode="ghost"
               text="Nudge Left"
-              onClick={() => applyLayoutPatch({ x: currentLayout.x - 1 })}
+              onClick={() => applyLayoutPatch({ x: currentLayout.x - 0.5 })}
             />
             <Button
               mode="ghost"
               text="Nudge Right"
-              onClick={() => applyLayoutPatch({ x: currentLayout.x + 1 })}
+              onClick={() => applyLayoutPatch({ x: currentLayout.x + 0.5 })}
             />
             <Button
               mode="ghost"
               text="Nudge Up"
-              onClick={() => applyLayoutPatch({ y: currentLayout.y - 1 })}
+              onClick={() => applyLayoutPatch({ y: currentLayout.y - 0.5 })}
             />
             <Button
               mode="ghost"
               text="Nudge Down"
-              onClick={() => applyLayoutPatch({ y: currentLayout.y + 1 })}
+              onClick={() => applyLayoutPatch({ y: currentLayout.y + 0.5 })}
             />
             <Button
               mode="ghost"
@@ -1149,7 +1160,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             <Button mode="ghost" text="Preset -> Valori" disabled={preset === 'auto'} onClick={applyPresetValues} />
             <Button mode="ghost" text="Reset Override" onClick={clearManualOverrides} />
             <Text size={1} muted>
-              X {currentLayout.x.toFixed(0)}% - Y {currentLayout.y.toFixed(0)}% - W {currentLayout.width.toFixed(0)}% - Z {currentLayout.z} - {currentLayout.preferred}
+              X {currentLayout.x.toFixed(1)}% - Y {currentLayout.y.toFixed(1)}% - W {currentLayout.width.toFixed(1)}% - Z {currentLayout.z} - {currentLayout.preferred}
             </Text>
           </Flex>
         </Stack>

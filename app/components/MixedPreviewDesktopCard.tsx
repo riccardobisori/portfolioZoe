@@ -16,6 +16,7 @@ interface MixedPreviewDesktopCardProps {
     project: ProjectWithUrl
     slot: MoodboardSlot
     row: number
+    rowOffsetPx: number
     breakpoint: DesktopBreakpointKey
     hoveredId: string | null
     setHoveredId: (id: string | null) => void
@@ -25,6 +26,7 @@ export default function MixedPreviewDesktopCard({
     project,
     slot,
     row,
+    rowOffsetPx,
     breakpoint,
     hoveredId,
     setHoveredId,
@@ -34,7 +36,7 @@ export default function MixedPreviewDesktopCard({
     // altrimenti usa lo slot automatico con offset di riga.
     const hasManualPosition = hasManualLayoutForBreakpoint(project, breakpoint)
     const isHovered = hoveredId === project._id
-    const top = hasManualPosition ? slot.top : `calc(${slot.top} + ${row * 490}px)`
+    const top = hasManualPosition ? slot.top : `calc(${slot.top} + ${row * rowOffsetPx}px)`
     // Aspect ratio robusto: reale se disponibile, altrimenti fallback orientato.
     const aspectRatio = getCardAspectRatio(project, slot.preferred)
 

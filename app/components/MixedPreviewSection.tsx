@@ -35,6 +35,7 @@ export default function MixedPreviewSection({
     const mobileFrameGap = 'clamp(12px, 2.6vw, 16px)'
     // `isDesktop` determina il branch di rendering.
     const [isDesktop, setIsDesktop] = useState(false)
+    const [desktopViewportWidth, setDesktopViewportWidth] = useState(1920)
     // Breakpoint logico desktop usato per risolvere override responsive dal CMS.
     const [desktopBreakpoint, setDesktopBreakpoint] = useState<DesktopBreakpointKey>('desktop1440')
     // Hover card desktop (overlay testo + z-index prioritaria).
@@ -65,6 +66,7 @@ export default function MixedPreviewSection({
         const update = () => {
             const width = window.innerWidth
             setIsDesktop(width >= 1024)
+            setDesktopViewportWidth(width)
             setDesktopBreakpoint(getDesktopBreakpointForWidth(width))
         }
 
@@ -75,11 +77,20 @@ export default function MixedPreviewSection({
 
     // Numero righe desktop in base al totale card e slot per riga.
     const rows = Math.ceil(arrangedProjects.length / MOODBOARD_SLOTS.length)
+    // Riduce progressivamente il canvas sotto i 1920px per evitare troppo vuoto verticale.
+    const desktopScale = useMemo(
+        () => Math.min(1, Math.max(0.68, desktopViewportWidth / 1920)),
+        [desktopViewportWidth]
+    )
+    const scaledBaseHeight = Math.round(MOODBOARD_BASE_HEIGHT * desktopScale)
+    const scaledRowHeight = Math.round(MOODBOARD_ROW_HEIGHT * desktopScale)
+    const desktopRowOffsetPx = Math.round(490 * desktopScale)
+    const desktopMinHeight = Math.round(980 * desktopScale)
     // Altezza canvas desktop: base + contributo per righe extra.
     const desktopCanvasHeight = useMemo(() => {
         const extraRows = Math.max(rows - 1, 0)
-        return `${MOODBOARD_BASE_HEIGHT + extraRows * MOODBOARD_ROW_HEIGHT}px`
-    }, [rows])
+        return `${scaledBaseHeight + extraRows * scaledRowHeight}px`
+    }, [rows, scaledBaseHeight, scaledRowHeight])
 
     // Non renderizziamo la sezione se non ci sono card.
     if (projects.length === 0) return null
@@ -98,20 +109,6 @@ export default function MixedPreviewSection({
                 paddingRight: isDesktop ? 'clamp(16px, 3vw, 48px)' : 0,
             }}
         >
-            {/* Glow decorativo di sfondo, non interattivo. */}
-            <div
-                aria-hidden
-                style={{
-                    position: 'absolute',
-                    top: '-180px',
-                    right: '-140px',
-                    width: '420px',
-                    height: '420px',
-                    borderRadius: '999px',
-                    background: 'radial-gradient(circle, rgba(200,184,154,0.2) 0%, rgba(200,184,154,0) 70%)',
-                    pointerEvents: 'none',
-                }}
-            />
             {/* Etichetta di sezione. */}
             <div
                 style={{
@@ -142,7 +139,7 @@ export default function MixedPreviewSection({
                         paddingLeft: 'clamp(4px, 0.8vw, 14px)',
                         paddingRight: 'clamp(5px, 1vw, 16px)',
                         height: desktopCanvasHeight,
-                        minHeight: '980px',
+                        minHeight: `${desktopMinHeight}px`,
                     }}
                 >
                     {arrangedProjects.map((project, index) => {
@@ -158,6 +155,7 @@ export default function MixedPreviewSection({
                                 project={project}
                                 slot={slot}
                                 row={row}
+                                rowOffsetPx={desktopRowOffsetPx}
                                 breakpoint={desktopBreakpoint}
                                 hoveredId={hoveredId}
                                 setHoveredId={setHoveredId}
@@ -200,40 +198,6 @@ export default function MixedPreviewSection({
                         }}
                     >
                         <Link
-                            href="/works"
-                            onMouseEnter={() => setHoveredCta('works')}
-                            onMouseLeave={() => setHoveredCta(null)}
-                            style={{
-                                display: 'inline-flex',
-                                flexDirection: 'column',
-                                alignItems: 'flex-end',
-                                width: ctaLinkWidth,
-                                gap: '0.26rem',
-                                textDecoration: 'none',
-                                color: 'var(--ink)',
-                                cursor: 'none',
-                                letterSpacing: '0.11em',
-                                textTransform: 'uppercase',
-                                fontSize: 'clamp(0.66rem, 0.9vw, 0.78rem)',
-                                fontWeight: 600,
-                                lineHeight: 1.2,
-                            }}
-                        >
-                            <span>View Works Archive {'\u2192'}</span>
-                            <span
-                                style={{
-                                    display: 'block',
-                                    width: '100%',
-                                    height: 0,
-                                    borderTop: '1px solid rgba(26, 24, 20, 0.82)',
-                                    // Sottolineatura "wipe" guidata dallo stato hover.
-                                    clipPath: hoveredCta === 'works' ? 'inset(0 0 0 0)' : 'inset(0 55% 0 0)',
-                                    alignSelf: 'flex-end',
-                                    transition: 'clip-path 320ms cubic-bezier(0.22, 1, 0.36, 1)',
-                                }}
-                            />
-                        </Link>
-                        <Link
                             href="/series"
                             onMouseEnter={() => setHoveredCta('series')}
                             onMouseLeave={() => setHoveredCta(null)}
@@ -262,6 +226,40 @@ export default function MixedPreviewSection({
                                     borderTop: '1px solid rgba(26, 24, 20, 0.82)',
                                     // Stessa animazione della CTA Works, con stato dedicato.
                                     clipPath: hoveredCta === 'series' ? 'inset(0 0 0 0)' : 'inset(0 55% 0 0)',
+                                    alignSelf: 'flex-end',
+                                    transition: 'clip-path 320ms cubic-bezier(0.22, 1, 0.36, 1)',
+                                }}
+                            />
+                        </Link>
+                        <Link
+                            href="/works"
+                            onMouseEnter={() => setHoveredCta('works')}
+                            onMouseLeave={() => setHoveredCta(null)}
+                            style={{
+                                display: 'inline-flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-end',
+                                width: ctaLinkWidth,
+                                gap: '0.26rem',
+                                textDecoration: 'none',
+                                color: 'var(--ink)',
+                                cursor: 'none',
+                                letterSpacing: '0.11em',
+                                textTransform: 'uppercase',
+                                fontSize: 'clamp(0.66rem, 0.9vw, 0.78rem)',
+                                fontWeight: 600,
+                                lineHeight: 1.2,
+                            }}
+                        >
+                            <span>View Works Archive {'\u2192'}</span>
+                            <span
+                                style={{
+                                    display: 'block',
+                                    width: '100%',
+                                    height: 0,
+                                    borderTop: '1px solid rgba(26, 24, 20, 0.82)',
+                                    // Sottolineatura "wipe" guidata dallo stato hover.
+                                    clipPath: hoveredCta === 'works' ? 'inset(0 0 0 0)' : 'inset(0 55% 0 0)',
                                     alignSelf: 'flex-end',
                                     transition: 'clip-path 320ms cubic-bezier(0.22, 1, 0.36, 1)',
                                 }}
