@@ -1,5 +1,13 @@
-// Questo schema definisce un singolo "Lavoro fotografico"
-// È il documento principale del portfolio
+// Schema di un singolo "Lavoro fotografico".
+// Nota: questo documento alimenta piu viste diverse del sito
+// (home preview, listing Works/Series, pagina dettaglio).
+import PreviewLayoutInput from './components/PreviewLayoutInput'
+
+type ValidationRule = {
+    required: () => ValidationRule
+    min: (value: number) => ValidationRule
+    max: (value: number) => ValidationRule
+}
 
 const work = {
     name: 'work',
@@ -11,7 +19,7 @@ const work = {
             name: 'title',
             title: 'Titolo',
             type: 'string',
-            validation: (Rule: any) => Rule.required(),
+            validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
             name: 'slug',
@@ -20,7 +28,7 @@ const work = {
             options: {
                 source: 'title',      // es. "Dissoluzione" → "dissoluzione"
             },
-            validation: (Rule: any) => Rule.required(),
+            validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
             // Il campo più importante — l'immagine principale del lavoro
@@ -32,7 +40,7 @@ const work = {
                 hotspot: true,        // permette di definire il punto focale dell'immagine
                 // utile per il crop automatico su mobile
             },
-            validation: (Rule: any) => Rule.required(),
+            validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
             // Galleria di immagini aggiuntive per il dettaglio del lavoro
@@ -49,18 +57,91 @@ const work = {
             title: 'Categoria',
             type: 'reference',      // tipo speciale — punta a un altro documento
             to: [{ type: 'category' }], // punta a un documento di tipo 'category'
-            validation: (Rule: any) => Rule.required(),
+            validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
             name: 'year',
             title: 'Anno',
             type: 'string',
-            validation: (Rule: any) => Rule.required(),
+            validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
             name: 'description',
             title: 'Descrizione',
             type: 'text',
+        },
+        {
+            name: 'previewLayout',
+            title: 'Layout Preview Home',
+            type: 'object',
+            // Configurazione editoriale usata SOLO nella moodboard della home.
+            // Non influisce su Works/Series listing né sulla pagina dettaglio.
+            description: 'Controllo manuale della posizione nella moodboard della home (solo homepage).',
+            options: { collapsible: true, collapsed: true },
+            components: { input: PreviewLayoutInput },
+            fields: [
+                {
+                    name: 'preset',
+                    title: 'Preset posizione',
+                    type: 'string',
+                    // "Auto" usa la disposizione algoritmica frontend.
+                    initialValue: 'auto',
+                    options: {
+                        list: [
+                            { title: 'Auto', value: 'auto' },
+                            { title: 'Sinistra Alta', value: 'leftTop' },
+                            { title: 'Centro Alto', value: 'centerTop' },
+                            { title: 'Destra Alta', value: 'rightTop' },
+                            { title: 'Destra Stretta', value: 'rightNarrowTop' },
+                            { title: 'Sinistra Bassa', value: 'leftBottom' },
+                            { title: 'Centro Basso', value: 'centerBottom' },
+                            { title: 'Destra Bassa', value: 'rightBottom' },
+                            { title: 'Destra Stretta Bassa', value: 'rightNarrowBottom' },
+                        ],
+                    },
+                },
+                {
+                    name: 'x',
+                    title: 'X (%)',
+                    type: 'number',
+                    description: 'Posizione orizzontale manuale (0-90). Lascia vuoto per usare il preset.',
+                    validation: (Rule: ValidationRule) => Rule.min(0).max(90),
+                },
+                {
+                    name: 'y',
+                    title: 'Y (%)',
+                    type: 'number',
+                    description: 'Posizione verticale manuale (0-95). Lascia vuoto per usare il preset.',
+                    validation: (Rule: ValidationRule) => Rule.min(0).max(95),
+                },
+                {
+                    name: 'width',
+                    title: 'Larghezza (%)',
+                    type: 'number',
+                    description: 'Larghezza card (10-45). Lascia vuoto per usare il preset.',
+                    validation: (Rule: ValidationRule) => Rule.min(10).max(45),
+                },
+                {
+                    name: 'z',
+                    title: 'Profondita z-index',
+                    type: 'number',
+                    description: 'Ordine di sovrapposizione (1-10).',
+                    validation: (Rule: ValidationRule) => Rule.min(1).max(10),
+                },
+                {
+                    name: 'preferred',
+                    title: 'Preferenza orientamento',
+                    type: 'string',
+                    initialValue: 'any',
+                    options: {
+                        list: [
+                            { title: 'Auto', value: 'any' },
+                            { title: 'Orizzontale', value: 'landscape' },
+                            { title: 'Verticale', value: 'portrait' },
+                        ],
+                    },
+                },
+            ],
         },
         {
             // Campo per mettere in evidenza il lavoro nella homepage

@@ -12,6 +12,8 @@ export const featuredWorksQuery = groq`
     slug,
     year,
     mainImage,
+    // Dati layout manuale per la moodboard home.
+    previewLayout,
     category-> {    
       title,
       slug

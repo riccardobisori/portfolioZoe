@@ -1,166 +1,303 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { WorkWithUrl } from './work-types'
 
-// Preview mista in home: contiene lavori eterogenei (Works + Series).
 interface MixedPreviewSectionProps {
     works: WorkWithUrl[]
     sectionId?: string
     headingText?: string
 }
 
-const MOBILE_MASONRY_GAP = 8
-const DESKTOP_MASONRY_GAP = 10
+type MoodboardSlot = {
+    top: string
+    left: string
+    width: string
+    z: number
+    preferred: 'landscape' | 'portrait' | 'any'
+}
 
-// Singola card della griglia masonry.
-function MasonryCard({ work, masonryGap }: { work: WorkWithUrl; masonryGap: number }) {
-    const cardRef = useRef<HTMLAnchorElement>(null)
-    const contentRef = useRef<HTMLDivElement>(null)
-    const [hovered, setHovered] = useState(false)
-    const [isLandscape, setIsLandscape] = useState(work.isLandscape || false)
-    const [rowSpan, setRowSpan] = useState(200)
+type MoodboardPresetKey =
+    | 'auto'
+    | 'leftTop'
+    | 'centerTop'
+    | 'rightTop'
+    | 'rightNarrowTop'
+    | 'leftBottom'
+    | 'centerBottom'
+    | 'rightBottom'
+    | 'rightNarrowBottom'
 
-    // Reveal on scroll: aggiunge classe "visible" quando la card entra in viewport.
-    useEffect(() => {
-        const el = cardRef.current
-        if (!el) return
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    el.classList.add('visible')
-                    observer.unobserve(el)
-                }
-            },
-            { threshold: 0.08 }
-        )
-        observer.observe(el)
-        return () => observer.disconnect()
-    }, [])
+// Slot "base" della moodboard desktop.
+// Ogni slot definisce posizione, ingombro e priorità di orientamento.
+const MOODBOARD_SLOTS: MoodboardSlot[] = [
+    { top: '1%', left: '1%', width: '23%', z: 2, preferred: 'portrait' },
+    { top: '8%', left: '24%', width: '33%', z: 2, preferred: 'landscape' },
+    { top: '2%', left: '54%', width: '24%', z: 2, preferred: 'portrait' },
+    { top: '8%', left: '75%', width: '17%', z: 1, preferred: 'portrait' },
+    { top: '58%', left: '1%', width: '31%', z: 1, preferred: 'landscape' },
+    { top: '50%', left: '34%', width: '24%', z: 2, preferred: 'portrait' },
+    { top: '56%', left: '58%', width: '24%', z: 2, preferred: 'landscape' },
+    { top: '64%', left: '75%', width: '16%', z: 1, preferred: 'portrait' },
+]
 
-    // Calcola lo span verticale reale in base all'altezza renderizzata dell'immagine.
-    useEffect(() => {
-        if (!contentRef.current) return
+const PREVIEW_LAYOUT_PRESETS: Record<Exclude<MoodboardPresetKey, 'auto'>, MoodboardSlot> = {
+    leftTop: MOODBOARD_SLOTS[0],
+    centerTop: MOODBOARD_SLOTS[1],
+    rightTop: MOODBOARD_SLOTS[2],
+    rightNarrowTop: MOODBOARD_SLOTS[3],
+    leftBottom: MOODBOARD_SLOTS[4],
+    centerBottom: MOODBOARD_SLOTS[5],
+    rightBottom: MOODBOARD_SLOTS[6],
+    rightNarrowBottom: MOODBOARD_SLOTS[7],
+}
 
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const height = entry.target.getBoundingClientRect().height
-                setRowSpan(Math.ceil(height) + masonryGap)
-            }
-        })
+function clamp(value: number, min: number, max: number) {
+    return Math.min(max, Math.max(min, value))
+}
 
-        resizeObserver.observe(contentRef.current)
-        return () => resizeObserver.disconnect()
-    }, [masonryGap])
+function hasManualLayout(work: WorkWithUrl) {
+    // Consideriamo "manuale" quando almeno uno dei controlli CMS è compilato.
+    const layout = work.previewLayout
+    if (!layout) return false
+    return (
+        (layout.preset != null && layout.preset !== 'auto') ||
+        layout.x != null ||
+        layout.y != null ||
+        layout.width != null ||
+        layout.z != null
+    )
+}
+
+function resolveSlotFromBackend(work: WorkWithUrl, fallbackSlot: MoodboardSlot): MoodboardSlot {
+    // Pipeline:
+    // 1) se c'è preset CMS, usiamo quello come base;
+    // 2) applichiamo eventuali override x/y/width/z;
+    // 3) se manca tutto, restiamo sul fallback automatico.
+    const layout = work.previewLayout
+    if (!layout) return fallbackSlot
+
+    const presetKey = layout.preset as MoodboardPresetKey | null | undefined
+    const presetSlot =
+        presetKey && presetKey !== 'auto'
+            ? PREVIEW_LAYOUT_PRESETS[presetKey as Exclude<MoodboardPresetKey, 'auto'>]
+            : undefined
+
+    const base = presetSlot ?? fallbackSlot
+    const manualPreferred = layout.preferred === 'landscape' || layout.preferred === 'portrait' || layout.preferred === 'any'
+        ? layout.preferred
+        : undefined
+
+    return {
+        // Limitiamo i valori per evitare card fuori canvas o dimensioni ingestibili.
+        top: layout.y != null ? `${clamp(layout.y, 0, 95)}%` : base.top,
+        left: layout.x != null ? `${clamp(layout.x, 0, 90)}%` : base.left,
+        width: layout.width != null ? `${clamp(layout.width, 10, 45)}%` : base.width,
+        z: layout.z != null ? clamp(layout.z, 1, 10) : base.z,
+        preferred: manualPreferred ?? base.preferred,
+    }
+}
+
+function arrangeWorksForMoodboard(works: WorkWithUrl[]) {
+    // Separiamo i lavori per orientamento per abbinarli meglio agli slot.
+    const portraits = works.filter((work) => !work.isLandscape)
+    const landscapes = works.filter((work) => work.isLandscape)
+    const arranged: WorkWithUrl[] = []
+
+    const pullLandscape = () => landscapes.shift() ?? portraits.shift()
+    const pullPortrait = () => portraits.shift() ?? landscapes.shift()
+    const pullAny = () =>
+        (portraits.length >= landscapes.length ? portraits.shift() : landscapes.shift()) ??
+        portraits.shift() ??
+        landscapes.shift()
+
+    for (let index = 0; index < works.length; index += 1) {
+        const slot = MOODBOARD_SLOTS[index % MOODBOARD_SLOTS.length]
+        let selected: WorkWithUrl | undefined
+
+        if (slot.preferred === 'landscape') {
+            selected = pullLandscape()
+        } else if (slot.preferred === 'portrait') {
+            selected = pullPortrait()
+        } else {
+            selected = pullAny()
+        }
+
+        if (selected) {
+            arranged.push(selected)
+        }
+    }
+
+    return arranged
+}
+
+function MoodboardCard({
+    work,
+    slot,
+    row,
+    hoveredId,
+    setHoveredId,
+}: {
+    work: WorkWithUrl
+    slot: MoodboardSlot
+    row: number
+    hoveredId: string | null
+    setHoveredId: (id: string | null) => void
+}) {
+    const hasManualPosition = hasManualLayout(work)
+    const isHovered = hoveredId === work._id
+    const isRightEdgeSlot = !hasManualPosition && parseFloat(slot.left) >= 70
+    const top = hasManualPosition ? slot.top : `calc(${slot.top} + ${row * 490}px)`
+    const evenRow = row % 2 === 0
+    const baseOffsetX = hasManualPosition
+        ? 0
+        : slot.preferred === 'landscape'
+            ? (evenRow ? -4 : 4)
+            : (evenRow ? -2 : 2)
+    const baseOffsetY = hasManualPosition
+        ? 0
+        : slot.preferred === 'landscape'
+            ? (evenRow ? -2 : 4)
+            : (evenRow ? -1 : 3)
+    const maxCardHeight = work.isLandscape
+        ? 'clamp(220px, 26vw, 420px)'
+        : 'clamp(305px, 38.5vw, 530px)'
+    const minCardWidth = work.isLandscape
+        ? 'clamp(265px, 28vw, 405px)'
+        : 'clamp(185px, 20vw, 270px)'
 
     return (
         <Link
-            ref={cardRef}
             href={`/works/${work.slug.current}`}
-            className="reveal"
+            onMouseEnter={() => setHoveredId(work._id)}
+            onMouseLeave={() => setHoveredId(null)}
+            onFocus={() => setHoveredId(work._id)}
+            onBlur={() => setHoveredId(null)}
             style={{
-                display: 'block',
-                position: 'relative',
-                cursor: 'none',
+                position: 'absolute',
+                top,
+                left: slot.left,
+                width: 'fit-content',
+                maxWidth: slot.width,
                 textDecoration: 'none',
                 color: 'inherit',
-                gridColumn: isLandscape ? 'span 2' : 'span 1',
-                gridRowEnd: `span ${rowSpan}`,
+                zIndex: isHovered ? 120 : hasManualPosition ? slot.z : slot.z + row * 8,
+                // Hover "soft": piccolo lift + scale moderata, senza spostamenti al centro.
+                transform: `translate(${baseOffsetX + (isRightEdgeSlot ? -8 : 0)}px, ${baseOffsetY + (isHovered ? -6 : 0)}px) scale(${isHovered ? 1.14 : 1})`,
+                transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1), z-index 0ms linear 120ms',
+                willChange: 'transform',
+                transformOrigin: 'center center',
+                cursor: 'none',
             }}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
         >
-            <div ref={contentRef} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
+            <div
+                style={{
+                    position: 'relative',
+                    width: 'fit-content',
+                    maxWidth: '100%',
+                }}
+            >
                 {work.imageUrl && (
                     <img
                         src={work.imageUrl}
                         alt={work.title}
-                        onLoad={(e) => {
-                            const img = e.target as HTMLImageElement
-                            setIsLandscape(img.naturalWidth > img.naturalHeight)
-                        }}
                         style={{
-                            width: '100%',
+                            width: 'auto',
                             height: 'auto',
+                            maxWidth: '100%',
+                            minWidth: minCardWidth,
+                            maxHeight: maxCardHeight,
                             display: 'block',
-                            borderRadius: '2px',
-                            transform: hovered ? 'scale(1.03)' : 'scale(1)',
-                            transition: 'transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)',
+                            borderRadius: '1px',
+                            border: '1px solid rgba(0, 0, 0, 0.28)',
+                            boxShadow: isHovered
+                                ? '0 36px 72px rgba(26, 24, 20, 0.34)'
+                                : '0 10px 24px rgba(26, 24, 20, 0.14)',
+                            transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                            transition: 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 420ms ease',
                         }}
                     />
                 )}
-
                 <div
                     style={{
                         position: 'absolute',
                         inset: 0,
-                        background: 'rgba(26,24,20,0.5)',
-                        opacity: hovered ? 1 : 0,
-                        transition: 'opacity 0.4s ease',
+                        padding: '0.9rem',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.5rem',
+                        gap: '0.35rem',
+                        pointerEvents: 'none',
+                        opacity: isHovered ? 1 : 0,
+                        transition: 'opacity 240ms ease',
                     }}
                 >
                     <span
                         style={{
-                            fontFamily: 'var(--font-brunoaceSC)',
-                            fontSize: 'clamp(1.5rem, 2.5vw, 2.5rem)',
-                            fontWeight: 400,
-                            fontStyle: 'italic',
-                            color: 'var(--cream)',
-                            letterSpacing: '0.01em',
-                            opacity: hovered ? 1 : 0,
-                            transform: hovered ? 'translateY(0)' : 'translateY(10px)',
-                            transition: 'opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s',
-                        }}
-                    >
-                        {work.category?.title}
-                    </span>
-                    <span
-                        style={{
-                            fontSize: '0.48rem',
-                            letterSpacing: '0.4em',
+                            color: 'rgba(247,244,239,0.95)',
+                            fontSize: 'clamp(0.66rem, 1vw, 0.82rem)',
+                            letterSpacing: '0.12em',
                             textTransform: 'uppercase',
-                            color: 'rgba(244,240,235,0.55)',
-                            opacity: hovered ? 1 : 0,
-                            transform: hovered ? 'translateY(0)' : 'translateY(6px)',
-                            transition: 'opacity 0.35s ease 0.1s, transform 0.35s ease 0.1s',
+                            lineHeight: 1.25,
+                            textAlign: 'center',
                         }}
                     >
                         {work.title}
                     </span>
+                    <span
+                        style={{
+                            color: 'rgba(247,244,239,0.78)',
+                            fontSize: '0.56rem',
+                            letterSpacing: '0.14em',
+                            textTransform: 'uppercase',
+                            whiteSpace: 'nowrap',
+                            textAlign: 'center',
+                        }}
+                    >
+                        {work.year}
+                    </span>
                 </div>
             </div>
+
         </Link>
     )
 }
 
-// Sezione gallery generica: stessa UI, contenuti diversi a seconda della pagina.
 export default function MixedPreviewSection({
     works,
     sectionId = 'preview',
-    headingText = 'Preview: Works + Series',
 }: MixedPreviewSectionProps) {
-    const [masonryGap, setMasonryGap] = useState(MOBILE_MASONRY_GAP)
+    const [isDesktop, setIsDesktop] = useState(false)
+    const [hoveredId, setHoveredId] = useState<string | null>(null)
     const [hoveredCta, setHoveredCta] = useState<'works' | 'series' | null>(null)
+
     const showArchiveCta = sectionId === 'preview'
     const ctaLinkWidth = 'clamp(11.5rem, 18vw, 13.5rem)'
+    // Se almeno un elemento ha layout manuale, non riordiniamo con l'algoritmo automatico.
+    const shouldUseManualLayout = useMemo(() => works.some((work) => hasManualLayout(work)), [works])
+    // Applichiamo l'ordine "misto" una sola volta per render, non ad ogni paint.
+    const arrangedWorks = useMemo(
+        () => (shouldUseManualLayout ? works : arrangeWorksForMoodboard(works)),
+        [works, shouldUseManualLayout]
+    )
 
-    // Gap diverso mobile/desktop per una resa visiva più equilibrata.
     useEffect(() => {
         const mediaQuery = window.matchMedia('(min-width: 1024px)')
-        const updateGap = () => {
-            setMasonryGap(mediaQuery.matches ? DESKTOP_MASONRY_GAP : MOBILE_MASONRY_GAP)
-        }
+        const update = () => setIsDesktop(mediaQuery.matches)
 
-        updateGap()
-        mediaQuery.addEventListener('change', updateGap)
-        return () => mediaQuery.removeEventListener('change', updateGap)
+        update()
+        mediaQuery.addEventListener('change', update)
+        return () => mediaQuery.removeEventListener('change', update)
     }, [])
+
+    const rows = Math.ceil(arrangedWorks.length / MOODBOARD_SLOTS.length)
+    const desktopCanvasHeight = useMemo(() => {
+        const baseHeight = 1220
+        const extraRows = Math.max(rows - 1, 0)
+        return `${baseHeight + extraRows * 560}px`
+    }, [rows])
 
     if (works.length === 0) return null
 
@@ -170,53 +307,142 @@ export default function MixedPreviewSection({
             data-cursor-scope
             style={{
                 width: '100%',
-                paddingTop: '58px',
-                paddingBottom: '20px',
+                position: 'relative',
+                overflow: 'hidden',
+                paddingTop: 'clamp(66px, 7vw, 96px)',
+                paddingBottom: 'clamp(2px, 0.6vw, 8px)',
                 paddingLeft: 'clamp(16px, 3vw, 48px)',
                 paddingRight: 'clamp(16px, 3vw, 48px)',
             }}
         >
-            <h2
+            <div
+                aria-hidden
                 style={{
-                    margin: 0,
-                    marginBottom: 'clamp(16px, 3vw, 30px)',
-                    marginLeft: 'auto',
-                    width: 'fit-content',
-                    fontFamily: 'var(--font-monserrat)',
-                    fontSize: 'clamp(0.85rem, 1.35vw, 1.05rem)',
-                    lineHeight: 1.2,
-                    letterSpacing: '0.02em',
-                    color: 'var(--charcoal)',
-                    textAlign: 'right',
+                    position: 'absolute',
+                    top: '-180px',
+                    right: '-140px',
+                    width: '420px',
+                    height: '420px',
+                    borderRadius: '999px',
+                    background: 'radial-gradient(circle, rgba(200,184,154,0.2) 0%, rgba(200,184,154,0) 70%)',
+                    pointerEvents: 'none',
                 }}
-            >
-                {headingText}
-            </h2>
+            />
             <div
                 style={{
-                    display: 'grid',
-                    width: '100%',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                    // Righe da 1px: ci permette di pilotare altezza card via rowSpan.
-                    gridAutoRows: '1px',
-                    // "dense" prova a riempire i buchi lasciati da elementi più alti.
-                    gridAutoFlow: 'dense',
-                    columnGap: `${masonryGap}px`,
+                    marginBottom: 'clamp(18px, 3.4vw, 34px)',
+                    borderBottom: '1px solid rgba(26,24,20,0.16)',
+                    paddingBottom: 'clamp(0.65rem, 1.5vw, 0.95rem)',
                 }}
             >
-                {works.map((work) => (
-                    <MasonryCard key={work._id} work={work} masonryGap={masonryGap} />
-                ))}
+                <p
+                    style={{
+                        margin: 0,
+                        fontSize: '0.56rem',
+                        letterSpacing: '0.32em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(26,24,20,0.56)',
+                    }}
+                >
+                    Curated Mix
+                </p>
             </div>
+
+            {isDesktop ? (
+                <div
+                    style={{
+                        position: 'relative',
+                        width: '100%',
+                        // Safe area laterale: evita che le card tocchino i bordi viewport.
+                        paddingLeft: 'clamp(4px, 0.8vw, 14px)',
+                        paddingRight: 'clamp(5px, 1vw, 16px)',
+                        height: desktopCanvasHeight,
+                        minHeight: '980px',
+                    }}
+                >
+                    {arrangedWorks.map((work, index) => {
+                        const baseSlot = MOODBOARD_SLOTS[index % MOODBOARD_SLOTS.length]
+                        // Slot finale = backend manuale (se presente) altrimenti slot automatico.
+                        const slot = resolveSlotFromBackend(work, baseSlot)
+                        const row = Math.floor(index / MOODBOARD_SLOTS.length)
+                        return (
+                            <MoodboardCard
+                                key={work._id}
+                                work={work}
+                                slot={slot}
+                                row={row}
+                                hoveredId={hoveredId}
+                                setHoveredId={setHoveredId}
+                            />
+                        )
+                    })}
+                </div>
+            ) : (
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr',
+                        gap: '0.9rem',
+                    }}
+                >
+                    {works.map((work) => (
+                        <Link
+                            key={work._id}
+                            href={`/works/${work.slug.current}`}
+                            style={{
+                                display: 'block',
+                                textDecoration: 'none',
+                                color: 'inherit',
+                            }}
+                        >
+                            <div
+                                style={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                {work.imageUrl && (
+                                    <img
+                                        src={work.imageUrl}
+                                        alt={work.title}
+                                        style={{
+                                            width: 'auto',
+                                            height: 'auto',
+                                            maxWidth: '100%',
+                                            maxHeight: '72vh',
+                                            minWidth: 'min(70vw, 230px)',
+                                            display: 'block',
+                                            borderRadius: '1px',
+                                            border: '1px solid rgba(0, 0, 0, 0.28)',
+                                            boxShadow: '0 16px 34px rgba(26,24,20,0.15)',
+                                        }}
+                                    />
+                                )}
+                                {/* Mobile: niente hover reale, quindi teniamo immagine pulita senza testo fisso */}
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            )}
+
             {showArchiveCta && (
                 <div
                     style={{
-                        marginTop: 'clamp(1.1rem, 2.8vw, 2.2rem)',
+                        marginTop: 'clamp(2.2rem, 5vw, 4rem)',
                         display: 'flex',
                         justifyContent: 'flex-end',
                     }}
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.62rem' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                            gap: '0.62rem',
+                        }}
+                    >
                         <Link
                             href="/works"
                             onMouseEnter={() => setHoveredCta('works')}
