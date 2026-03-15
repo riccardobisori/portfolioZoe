@@ -28,18 +28,30 @@ type MoodboardPresetKey =
     | 'centerBottom'
     | 'rightBottom'
     | 'rightNarrowBottom'
+    | 'leftThird'
+    | 'centerThird'
+    | 'rightThird'
+    | 'rightNarrowThird'
+
+type DesktopBreakpointKey = 'desktop1024' | 'desktop1440' | 'desktop1920'
 
 // Slot "base" della moodboard desktop.
 // Ogni slot definisce posizione, ingombro e priorità di orientamento.
 const MOODBOARD_SLOTS: MoodboardSlot[] = [
     { top: '1%', left: '1%', width: '23%', z: 2, preferred: 'portrait' },
-    { top: '8%', left: '24%', width: '33%', z: 2, preferred: 'landscape' },
+    { top: '6%', left: '24%', width: '33%', z: 2, preferred: 'landscape' },
     { top: '2%', left: '54%', width: '24%', z: 2, preferred: 'portrait' },
-    { top: '8%', left: '75%', width: '17%', z: 1, preferred: 'portrait' },
-    { top: '58%', left: '1%', width: '31%', z: 1, preferred: 'landscape' },
-    { top: '50%', left: '34%', width: '24%', z: 2, preferred: 'portrait' },
-    { top: '56%', left: '58%', width: '24%', z: 2, preferred: 'landscape' },
-    { top: '64%', left: '75%', width: '16%', z: 1, preferred: 'portrait' },
+    { top: '6%', left: '75%', width: '17%', z: 1, preferred: 'portrait' },
+    
+    { top: '39%', left: '1%', width: '31%', z: 1, preferred: 'landscape' },
+    { top: '34%', left: '34%', width: '24%', z: 2, preferred: 'portrait' },
+    { top: '38%', left: '58%', width: '24%', z: 2, preferred: 'landscape' },
+    { top: '44%', left: '75%', width: '16%', z: 1, preferred: 'portrait' },
+    
+    { top: '70%', left: '2%', width: '22%', z: 2, preferred: 'portrait' },
+    { top: '74%', left: '26%', width: '32%', z: 1, preferred: 'landscape' },
+    { top: '68%', left: '59%', width: '24%', z: 2, preferred: 'portrait' },
+    { top: '76%', left: '84%', width: '15%', z: 1, preferred: 'portrait' },
 ]
 
 const PREVIEW_LAYOUT_PRESETS: Record<Exclude<MoodboardPresetKey, 'auto'>, MoodboardSlot> = {
@@ -51,10 +63,14 @@ const PREVIEW_LAYOUT_PRESETS: Record<Exclude<MoodboardPresetKey, 'auto'>, Moodbo
     centerBottom: MOODBOARD_SLOTS[5],
     rightBottom: MOODBOARD_SLOTS[6],
     rightNarrowBottom: MOODBOARD_SLOTS[7],
+    leftThird: MOODBOARD_SLOTS[8],
+    centerThird: MOODBOARD_SLOTS[9],
+    rightThird: MOODBOARD_SLOTS[10],
+    rightNarrowThird: MOODBOARD_SLOTS[11],
 }
 
-const MOODBOARD_BASE_HEIGHT = 1220
-const MOODBOARD_ROW_HEIGHT = 560
+const MOODBOARD_BASE_HEIGHT = 1800
+const MOODBOARD_ROW_HEIGHT = 600
 
 function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value))
@@ -76,9 +92,23 @@ function getCardAspectRatio(work: WorkWithUrl, preferred: MoodboardSlot['preferr
     return preferred === 'portrait' ? '2 / 3' : '3 / 2'
 }
 
-function hasManualLayout(work: WorkWithUrl) {
-    // Consideriamo "manuale" quando almeno uno dei controlli CMS è compilato.
-    const layout = work.previewLayout
+function resolveLayoutForBreakpoint(layout: WorkWithUrl['previewLayout'], breakpoint: DesktopBreakpointKey) {
+    if (!layout) return null
+    const override = layout.responsive?.[breakpoint]
+    if (!override) return layout
+    return {
+        ...layout,
+        preset: override.preset ?? layout.preset,
+        x: override.x ?? layout.x,
+        y: override.y ?? layout.y,
+        width: override.width ?? layout.width,
+        z: override.z ?? layout.z,
+        preferred: override.preferred ?? layout.preferred,
+    }
+}
+
+function hasManualLayoutForBreakpoint(work: WorkWithUrl, breakpoint: DesktopBreakpointKey) {
+    const layout = resolveLayoutForBreakpoint(work.previewLayout, breakpoint)
     if (!layout) return false
     return (
         (layout.preset != null && layout.preset !== 'auto') ||
@@ -89,12 +119,12 @@ function hasManualLayout(work: WorkWithUrl) {
     )
 }
 
-function resolveSlotFromBackend(work: WorkWithUrl, fallbackSlot: MoodboardSlot): MoodboardSlot {
+function resolveSlotFromBackend(work: WorkWithUrl, fallbackSlot: MoodboardSlot, breakpoint: DesktopBreakpointKey): MoodboardSlot {
     // Pipeline:
     // 1) se c'è preset CMS, usiamo quello come base;
     // 2) applichiamo eventuali override x/y/width/z;
     // 3) se manca tutto, restiamo sul fallback automatico.
-    const layout = work.previewLayout
+    const layout = resolveLayoutForBreakpoint(work.previewLayout, breakpoint)
     if (!layout) return fallbackSlot
 
     const presetKey = layout.preset as MoodboardPresetKey | null | undefined
@@ -155,16 +185,18 @@ function MoodboardCard({
     work,
     slot,
     row,
+    breakpoint,
     hoveredId,
     setHoveredId,
 }: {
     work: WorkWithUrl
     slot: MoodboardSlot
     row: number
+    breakpoint: DesktopBreakpointKey
     hoveredId: string | null
     setHoveredId: (id: string | null) => void
 }) {
-    const hasManualPosition = hasManualLayout(work)
+    const hasManualPosition = hasManualLayoutForBreakpoint(work, breakpoint)
     const isHovered = hoveredId === work._id
     const isRightEdgeSlot = !hasManualPosition && parseFloat(slot.left) >= 70
     const top = hasManualPosition ? slot.top : `calc(${slot.top} + ${row * 490}px)`
@@ -281,13 +313,17 @@ export default function MixedPreviewSection({
     sectionId = 'preview',
 }: MixedPreviewSectionProps) {
     const [isDesktop, setIsDesktop] = useState(false)
+    const [desktopBreakpoint, setDesktopBreakpoint] = useState<DesktopBreakpointKey>('desktop1440')
     const [hoveredId, setHoveredId] = useState<string | null>(null)
     const [hoveredCta, setHoveredCta] = useState<'works' | 'series' | null>(null)
 
     const showArchiveCta = sectionId === 'preview'
     const ctaLinkWidth = 'clamp(11.5rem, 18vw, 13.5rem)'
     // Se almeno un elemento ha layout manuale, non riordiniamo con l'algoritmo automatico.
-    const shouldUseManualLayout = useMemo(() => works.some((work) => hasManualLayout(work)), [works])
+    const shouldUseManualLayout = useMemo(
+        () => works.some((work) => hasManualLayoutForBreakpoint(work, desktopBreakpoint)),
+        [desktopBreakpoint, works]
+    )
     // Applichiamo l'ordine "misto" una sola volta per render, non ad ogni paint.
     const arrangedWorks = useMemo(
         () => (shouldUseManualLayout ? works : arrangeWorksForMoodboard(works)),
@@ -295,12 +331,17 @@ export default function MixedPreviewSection({
     )
 
     useEffect(() => {
-        const mediaQuery = window.matchMedia('(min-width: 1024px)')
-        const update = () => setIsDesktop(mediaQuery.matches)
+        const update = () => {
+            const width = window.innerWidth
+            setIsDesktop(width >= 1024)
+            if (width >= 1760) setDesktopBreakpoint('desktop1920')
+            else if (width >= 1366) setDesktopBreakpoint('desktop1440')
+            else setDesktopBreakpoint('desktop1024')
+        }
 
         update()
-        mediaQuery.addEventListener('change', update)
-        return () => mediaQuery.removeEventListener('change', update)
+        window.addEventListener('resize', update)
+        return () => window.removeEventListener('resize', update)
     }, [])
 
     const rows = Math.ceil(arrangedWorks.length / MOODBOARD_SLOTS.length)
@@ -373,7 +414,7 @@ export default function MixedPreviewSection({
                     {arrangedWorks.map((work, index) => {
                         const baseSlot = MOODBOARD_SLOTS[index % MOODBOARD_SLOTS.length]
                         // Slot finale = backend manuale (se presente) altrimenti slot automatico.
-                        const slot = resolveSlotFromBackend(work, baseSlot)
+                        const slot = resolveSlotFromBackend(work, baseSlot, desktopBreakpoint)
                         const row = Math.floor(index / MOODBOARD_SLOTS.length)
                         return (
                             <MoodboardCard
@@ -381,6 +422,7 @@ export default function MixedPreviewSection({
                                 work={work}
                                 slot={slot}
                                 row={row}
+                                breakpoint={desktopBreakpoint}
                                 hoveredId={hoveredId}
                                 setHoveredId={setHoveredId}
                             />

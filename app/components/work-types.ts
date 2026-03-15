@@ -1,6 +1,6 @@
 // Tipo "grezzo" così come arriva da Sanity.
 // Qui teniamo solo i campi che usiamo nel frontend.
-export interface WorkPreviewLayout {
+export interface WorkPreviewLayoutValues {
     // Slot "guidato" scelto da editor CMS (es. leftTop, centerBottom, ecc.).
     preset?: string | null
     // Override manuali opzionali (percentuali): se presenti, prevalgono sul preset.
@@ -11,6 +11,15 @@ export interface WorkPreviewLayout {
     z?: number | null
     // Suggerimento orientamento per gli algoritmi fallback.
     preferred?: 'landscape' | 'portrait' | 'any' | null
+}
+
+export interface WorkPreviewLayout extends WorkPreviewLayoutValues {
+    // Override opzionali per breakpoint desktop.
+    responsive?: {
+        desktop1024?: WorkPreviewLayoutValues | null
+        desktop1440?: WorkPreviewLayoutValues | null
+        desktop1920?: WorkPreviewLayoutValues | null
+    } | null
 }
 
 export interface SanityWork {
