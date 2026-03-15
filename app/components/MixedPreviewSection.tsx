@@ -115,6 +115,8 @@ export default function MixedPreviewSection({
                     marginBottom: 'clamp(18px, 3.4vw, 34px)',
                     borderBottom: '1px solid rgba(26,24,20,0.16)',
                     paddingBottom: 'clamp(0.65rem, 1.5vw, 0.95rem)',
+                    paddingLeft: isDesktop ? 0 : mobileFrameGap,
+                    paddingRight: isDesktop ? 0 : mobileFrameGap,
                 }}
             >
                 <p

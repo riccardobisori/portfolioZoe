@@ -138,12 +138,13 @@ export default function Hero({ heroImage }: HeroProps) {
         return () => observer.disconnect()
     }, [])
 
-    // URL dedicati per ridurre l'upscaling sui device ad alta densita.
+    // URL dedicati ma piu leggeri: la Hero e above-the-fold,
+    // quindi privilegiamo il tempo di comparsa iniziale.
     const desktopImageUrl = heroImage
-        ? urlFor(heroImage).width(5200).quality(100).format('jpg').url()
+        ? urlFor(heroImage).width(2800).quality(84).auto('format').url()
         : null
     const mobileImageUrl = heroImage
-        ? urlFor(heroImage).width(3200).quality(100).format('jpg').url()
+        ? urlFor(heroImage).width(1800).quality(84).auto('format').url()
         : null
     const imageUrl = isTouchDevice ? mobileImageUrl : desktopImageUrl
 
@@ -217,7 +218,7 @@ export default function Hero({ heroImage }: HeroProps) {
                         alt="Ginevra Zoe Giannelli"
                         fill
                         priority
-                        unoptimized
+                        quality={85}
                         sizes="100vw"
                         style={{
                             objectFit: 'cover',

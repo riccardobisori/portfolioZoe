@@ -103,7 +103,7 @@ export default function Nav() {
       }}
     >
       <div
-        className="flex items-center justify-between py-4 md:py-8"
+        className="flex items-center justify-between py-5 md:py-9"
         style={{
           paddingLeft: 'max(env(safe-area-inset-left, 0px), clamp(0.35rem, 1.2vw, 0.9rem))',
           paddingRight: 'max(env(safe-area-inset-right, 0px), clamp(1.25rem, 4vw, 3.25rem))',
@@ -114,7 +114,7 @@ export default function Nav() {
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span style={{
             fontFamily: 'var(--font-cormorant)',
-            fontSize: '1.1rem',
+            fontSize: '1.28rem',
             fontWeight: 'bold',
             letterSpacing: '0.45em',
             textTransform: 'uppercase',
@@ -133,7 +133,7 @@ export default function Nav() {
                 href={item.href}
                 onClick={(event) => handleSectionClick(event, item.href)}
                 style={{
-                  fontSize: '0.58rem',
+                  fontSize: '0.72rem',
                   fontWeight: 'bold',
                   letterSpacing: '0.32em',
                   textTransform: 'uppercase',
@@ -226,7 +226,7 @@ export default function Nav() {
                 href={item.href}
                 onClick={(event) => handleSectionClick(event, item.href)}
                 style={{
-                  fontSize: '0.64rem',
+                  fontSize: '0.78rem',
                   fontWeight: 600,
                   letterSpacing: '0.28em',
                   textTransform: 'uppercase',

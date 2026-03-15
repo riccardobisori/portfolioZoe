@@ -84,7 +84,7 @@ export default function MixedPreviewDesktopCard({
                             border: '1px solid rgba(0, 0, 0, 0.28)',
                             objectFit: 'cover',
                             boxShadow: isHovered
-                                ? '0 36px 72px rgba(26, 24, 20, 0.34)'
+                                ? '0 20px 40px rgba(26, 24, 20, 0.22)'
                                 : '0 10px 24px rgba(26, 24, 20, 0.14)',
                             transition: 'box-shadow 420ms ease',
                         }}
@@ -111,6 +111,7 @@ export default function MixedPreviewDesktopCard({
                         style={{
                             color: 'rgba(247,244,239,0.95)',
                             fontSize: 'clamp(0.66rem, 1vw, 0.82rem)',
+                            fontWeight: 'bold',
                             letterSpacing: '0.12em',
                             textTransform: 'uppercase',
                             lineHeight: 1.25,
@@ -123,6 +124,7 @@ export default function MixedPreviewDesktopCard({
                         style={{
                             color: 'rgba(247,244,239,0.78)',
                             fontSize: '0.56rem',
+                            fontWeight: 'bold',
                             letterSpacing: '0.14em',
                             textTransform: 'uppercase',
                             whiteSpace: 'nowrap',
