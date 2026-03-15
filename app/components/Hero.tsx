@@ -29,7 +29,13 @@ export default function Hero({ heroImage }: HeroProps) {
             const isTouch = touchMediaQuery.matches
             setIsTouchDevice(isTouch)
 
-            if (!isTouch) return
+            if (!isTouch) {
+                targetRef.current = 0
+                progressRef.current = 0
+                setExpandProgress(0)
+                setScrollUnlocked(false)
+                return
+            }
 
             // Su touch non c'è wheel: partiamo già in stato "sbloccato"
             // per non bloccare la pagina nella Hero.
@@ -46,10 +52,11 @@ export default function Hero({ heroImage }: HeroProps) {
     }, [])
 
     useEffect(() => {
+        if (isTouchDevice) return
+
         const SCROLL_TO_PROGRESS = 0.001
 
         const onWheel = (event: WheelEvent) => {
-            if (isTouchDevice) return
             if (scrollUnlocked) return
 
             const current = progressRef.current
@@ -79,6 +86,8 @@ export default function Hero({ heroImage }: HeroProps) {
     }, [isTouchDevice, scrollUnlocked])
 
     useEffect(() => {
+        if (isTouchDevice) return
+
         let raf = 0
 
         const animate = () => {
@@ -100,12 +109,14 @@ export default function Hero({ heroImage }: HeroProps) {
 
         raf = requestAnimationFrame(animate)
         return () => cancelAnimationFrame(raf)
-    }, [])
+    }, [isTouchDevice])
 
     useEffect(() => {
         const previous = document.body.style.overflow
-        // Finché la Hero non è "sbloccata" dalla freccia, blocchiamo lo scroll documento.
-        if (!scrollUnlocked) {
+        // Su mobile lo scroll è sempre libero. Il lock vale solo desktop.
+        if (isTouchDevice) {
+            document.body.style.overflow = ''
+        } else if (!scrollUnlocked) {
             document.body.style.overflow = 'hidden'
         } else {
             document.body.style.overflow = ''
@@ -114,7 +125,7 @@ export default function Hero({ heroImage }: HeroProps) {
         return () => {
             document.body.style.overflow = previous
         }
-    }, [scrollUnlocked])
+    }, [isTouchDevice, scrollUnlocked])
 
     useLayoutEffect(() => {
         if (!titleRef.current) return
@@ -134,7 +145,7 @@ export default function Hero({ heroImage }: HeroProps) {
         ? urlFor(heroImage).width(1920).height(1080).quality(90).url()
         : null
 
-    const showArrow = expandProgress >= 0.985
+    const showArrow = !isTouchDevice && expandProgress >= 0.985
 
     useEffect(() => {
         window.dispatchEvent(
@@ -233,7 +244,7 @@ export default function Hero({ heroImage }: HeroProps) {
                 backgroundRepeat: 'no-repeat, repeat',
                 zIndex: 2,
                 pointerEvents: 'none',
-            }} />
+            }} className="hidden md:block" />
 
             {/* Contenuto testuale sopra tutto: resta sempre sopra anche durante espansione */}
             <div style={{

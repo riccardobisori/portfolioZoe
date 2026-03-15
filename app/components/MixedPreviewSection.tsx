@@ -380,9 +380,9 @@ export default function MixedPreviewSection({
             ) : (
                 <div
                     style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr',
-                        gap: '0.9rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.15rem',
                     }}
                 >
                     {works.map((work) => (
@@ -390,7 +390,10 @@ export default function MixedPreviewSection({
                             key={work._id}
                             href={`/works/${work.slug.current}`}
                             style={{
-                                display: 'block',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minHeight: '88svh',
                                 textDecoration: 'none',
                                 color: 'inherit',
                             }}
@@ -401,6 +404,7 @@ export default function MixedPreviewSection({
                                     width: '100%',
                                     display: 'flex',
                                     justifyContent: 'center',
+                                    alignItems: 'center',
                                 }}
                             >
                                 {work.imageUrl && (
@@ -410,9 +414,9 @@ export default function MixedPreviewSection({
                                         style={{
                                             width: 'auto',
                                             height: 'auto',
-                                            maxWidth: '100%',
-                                            maxHeight: '72vh',
-                                            minWidth: 'min(70vw, 230px)',
+                                            maxWidth: '92vw',
+                                            maxHeight: '78svh',
+                                            minWidth: 'min(72vw, 230px)',
                                             display: 'block',
                                             borderRadius: '1px',
                                             border: '1px solid rgba(0, 0, 0, 0.28)',

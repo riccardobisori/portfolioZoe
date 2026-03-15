@@ -4,11 +4,24 @@ import Link from 'next/link'
 import { useEffect, useState, type MouseEvent } from 'react'
 
 export default function Nav() {
+  const navItems = [
+    { label: 'Works', href: '/works' },
+    { label: 'Series', href: '/series' },
+    { label: 'About', href: '#about' },
+    { label: 'Contact', href: '#contact' },
+  ]
   const [heroLightPhase, setHeroLightPhase] = useState(false)
   const [isPastHero, setIsPastHero] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const shouldUseLightNav = heroLightPhase && !isPastHero
   const navTextColor = shouldUseLightNav ? '#f7f4ef' : 'var(--ink)'
   const navBorderColor = shouldUseLightNav ? 'rgba(247, 244, 239, 0.42)' : 'rgba(26,24,20,0.2)'
+  const mobilePanelBg = shouldUseLightNav
+    ? 'rgba(15, 13, 10, 0.94)'
+    : 'rgba(247, 244, 239, 0.96)'
+  const mobilePanelBorder = shouldUseLightNav
+    ? 'rgba(247, 244, 239, 0.22)'
+    : 'rgba(26,24,20,0.16)'
 
   useEffect(() => {
     const handleHeroLightPhase = (event: Event) => {
@@ -40,7 +53,31 @@ export default function Nav() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [mobileMenuOpen])
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const handleSectionClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+    setMobileMenuOpen(false)
+
     if (!href.startsWith('#')) return
 
     const targetId = href.slice(1)
@@ -92,12 +129,7 @@ export default function Nav() {
 
         {/* Link di navigazione — bianchi su hero scuro */}
         <ul className="hidden md:flex gap-10 list-none">
-          {[
-            { label: 'Works', href: '/works' },
-            { label: 'Series', href: '/series' },
-            { label: 'About', href: '#about' },
-            { label: 'Contact', href: '#contact' },
-          ].map((item) => (
+          {navItems.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
@@ -118,24 +150,93 @@ export default function Nav() {
           ))}
         </ul>
 
-        <ul className="flex md:hidden items-center gap-5 list-none">
-          {[
-            { label: 'Works', href: '/works' },
-            { label: 'Series', href: '/series' },
-            { label: 'Contact', href: '#contact' },
-          ].map((item) => (
+        <button
+          type="button"
+          aria-label={mobileMenuOpen ? 'Chiudi menu' : 'Apri menu'}
+          aria-expanded={mobileMenuOpen}
+          className="md:hidden"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          style={{
+            width: '44px',
+            height: '44px',
+            border: 0,
+            background: 'transparent',
+            color: navTextColor,
+            display: 'grid',
+            placeItems: 'center',
+            padding: 0,
+          }}
+        >
+          <span style={{ position: 'relative', width: '20px', height: '14px', display: 'block' }}>
+            <span style={{
+              position: 'absolute',
+              left: 0,
+              top: mobileMenuOpen ? '6px' : 0,
+              width: '20px',
+              height: '1px',
+              backgroundColor: 'currentColor',
+              transform: mobileMenuOpen ? 'rotate(45deg)' : 'none',
+              transition: 'top 0.2s ease, transform 0.2s ease',
+            }} />
+            <span style={{
+              position: 'absolute',
+              left: 0,
+              top: '6px',
+              width: '20px',
+              height: '1px',
+              backgroundColor: 'currentColor',
+              opacity: mobileMenuOpen ? 0 : 1,
+              transition: 'opacity 0.2s ease',
+            }} />
+            <span style={{
+              position: 'absolute',
+              left: 0,
+              top: mobileMenuOpen ? '6px' : '12px',
+              width: '20px',
+              height: '1px',
+              backgroundColor: 'currentColor',
+              transform: mobileMenuOpen ? 'rotate(-45deg)' : 'none',
+              transition: 'top 0.2s ease, transform 0.2s ease',
+            }} />
+          </span>
+        </button>
+
+      </div>
+      <div
+        className="md:hidden"
+        style={{
+          maxHeight: mobileMenuOpen ? '70vh' : 0,
+          opacity: mobileMenuOpen ? 1 : 0,
+          overflow: 'hidden',
+          pointerEvents: mobileMenuOpen ? 'auto' : 'none',
+          transition: 'max-height 0.28s ease, opacity 0.2s ease',
+          borderBottom: `1px solid ${mobilePanelBorder}`,
+          background: mobilePanelBg,
+          backdropFilter: 'blur(5px)',
+        }}
+      >
+        <ul
+          className="list-none"
+          style={{
+            margin: 0,
+            padding: '1.2rem max(env(safe-area-inset-right, 0px), clamp(1.25rem, 4vw, 2.2rem)) 1.35rem max(env(safe-area-inset-left, 0px), clamp(1.25rem, 4vw, 2.2rem))',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+          }}
+        >
+          {navItems.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 onClick={(event) => handleSectionClick(event, item.href)}
                 style={{
-                  fontSize: '0.54rem',
-                  fontWeight: 500,
-                  letterSpacing: '0.24em',
+                  fontSize: '0.64rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.28em',
                   textTransform: 'uppercase',
                   color: navTextColor,
                   textDecoration: 'none',
-                  transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
                 {item.label}
@@ -143,7 +244,6 @@ export default function Nav() {
             </li>
           ))}
         </ul>
-
       </div>
     </nav>
   )
