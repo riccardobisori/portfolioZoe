@@ -102,6 +102,9 @@ type ReferenceCard = {
   preferred: Preferred
   aspectRatio: string
   topPx?: number
+  offsetX: number
+  offsetY: number
+  manual: boolean
   row: number
 }
 
@@ -145,6 +148,9 @@ const MOODBOARD_SLOTS = [
   { top: 64, left: 75, width: 16, z: 1, preferred: 'portrait' as Preferred },
 ]
 
+const MOODBOARD_BASE_HEIGHT = 1220
+const MOODBOARD_ROW_HEIGHT = 560
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
@@ -156,6 +162,12 @@ function snap(value: number, step = 1) {
 function getPreviewAspectRatio(preferred: Preferred) {
   if (preferred === 'portrait') return '2 / 3'
   return '3 / 2'
+}
+
+function getImageAspectRatioFromRef(imageRef?: string) {
+  const dims = parseImageDimensionsFromRef(imageRef)
+  if (!dims) return null
+  return `${dims.width} / ${dims.height}`
 }
 
 function parseImageDimensionsFromRef(imageRef?: string) {
@@ -179,16 +191,63 @@ function isManualLayout(layout?: PreviewLayoutRaw) {
   )
 }
 
+function getMoodboardBaseOffset(preferred: Preferred, row: number, leftPercent: number) {
+  const evenRow = row % 2 === 0
+  const landscape = preferred === 'landscape'
+  const baseOffsetX = landscape ? (evenRow ? -4 : 4) : evenRow ? -2 : 2
+  const baseOffsetY = landscape ? (evenRow ? -2 : 4) : evenRow ? -1 : 3
+  const rightEdgeOffset = leftPercent >= 70 ? -8 : 0
+  return {
+    offsetX: baseOffsetX + rightEdgeOffset,
+    offsetY: baseOffsetY,
+  }
+}
+
+function getDesktopScenePadding(viewportWidth: number) {
+  const sectionPadding = clamp(viewportWidth * 0.03, 16, 48)
+  const canvasLeftSafe = clamp(viewportWidth * 0.008, 4, 14)
+  const canvasRightSafe = clamp(viewportWidth * 0.01, 5, 16)
+  return {
+    left: sectionPadding + canvasLeftSafe,
+    right: sectionPadding + canvasRightSafe,
+  }
+}
+
+type ActiveAutoPlacement = {
+  x: number
+  y: number
+  width: number
+  z: number
+  preferred: Preferred
+  topPx?: number
+  offsetX: number
+  offsetY: number
+}
+
+const VIEWPORT_PRESETS = [
+  { label: 'Laptop', width: 1024 },
+  { label: 'Wide Laptop', width: 1280 },
+  { label: 'MBP 14', width: 1512 },
+  { label: 'Laptop FHD', width: 1536 },
+  { label: 'Desktop', width: 1440 },
+  { label: 'Desktop FHD', width: 1920 },
+] as const
+
 export default function PreviewLayoutInput(props: ObjectInputProps) {
   const client = useClient({ apiVersion: '2026-03-07' })
   const lastPresetRef = useRef<string | undefined>(undefined)
   const hasInitializedRef = useRef(false)
   const dragStateRef = useRef<DragState | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [canvasZoom, setCanvasZoom] = useState(1)
+  const [canvasZoom, setCanvasZoom] = useState(0.75)
+  const [canvasHeightScale, setCanvasHeightScale] = useState(1)
+  const [fitToViewport, setFitToViewport] = useState(true)
+  const [viewportWidth, setViewportWidth] = useState<number>(1920)
   const [referenceCards, setReferenceCards] = useState<ReferenceCard[]>([])
-  const [logicalCanvasHeight, setLogicalCanvasHeight] = useState(1220)
+  const [activeAutoPlacement, setActiveAutoPlacement] = useState<ActiveAutoPlacement | null>(null)
+  const [logicalCanvasHeight, setLogicalCanvasHeight] = useState(MOODBOARD_BASE_HEIGHT)
   const canvasRef = useRef<HTMLDivElement | null>(null)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
   const preset = typeof props.value?.preset === 'string' ? (props.value.preset as PresetKey) : 'auto'
   const documentValue = useFormValue([]) as DocumentWithImage | undefined
   const currentDocumentId = documentValue?._id ?? ''
@@ -219,6 +278,10 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
       preferred: safePreferred,
     }
   }, [preset, props.value])
+  const activeImageAspectRatio = useMemo(() => {
+    const byImageRef = getImageAspectRatioFromRef(mainImage?.asset?._ref)
+    return byImageRef ?? getPreviewAspectRatio(activeLayout.preferred)
+  }, [activeLayout.preferred, mainImage?.asset?._ref])
 
   useEffect(() => {
     let cancelled = false
@@ -302,18 +365,14 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
       const shouldUseManual = works.some((work) => isManualLayout(work.previewLayout))
       const arrangedWorks = shouldUseManual ? works : arrangeForMoodboard(works)
       const rows = Math.ceil(Math.max(arrangedWorks.length, 1) / MOODBOARD_SLOTS.length)
-      const desktopHeight = 1220 + Math.max(rows - 1, 0) * 560
+      const desktopHeight = MOODBOARD_BASE_HEIGHT + Math.max(rows - 1, 0) * MOODBOARD_ROW_HEIGHT
 
-      const cards = arrangedWorks
-        .map((work, index) => ({ work, index }))
-        .filter(({ work }) => normalizeId(work._id) !== currentBaseId)
-        .map((work, index) => {
-          const item = 'work' in work ? work.work : work
-          const idx = 'index' in work ? work.index : index
+      const cardsWithCurrent = arrangedWorks.map((item, idx) => {
           const layout = resolveLayout(item, idx)
           const slot = MOODBOARD_SLOTS[idx % MOODBOARD_SLOTS.length]
           const row = Math.floor(idx / MOODBOARD_SLOTS.length)
           const manual = isManualLayout(item.previewLayout)
+          const baseOffset = manual ? { offsetX: 0, offsetY: 0 } : getMoodboardBaseOffset(layout.preferred, row, slot.left)
           let imageUrl: string | null = null
           if (item.mainImage) {
             try {
@@ -331,26 +390,102 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             width: layout.width,
             z: manual ? layout.z : slot.z + row * 8,
             preferred: layout.preferred,
-            aspectRatio: getPreviewAspectRatio(layout.preferred),
+            aspectRatio:
+              getImageAspectRatioFromRef(item.mainImage?.asset?._ref) ?? getPreviewAspectRatio(layout.preferred),
             topPx: manual ? undefined : (slot.top / 100) * desktopHeight + row * 490,
+            offsetX: baseOffset.offsetX,
+            offsetY: baseOffset.offsetY,
+            manual,
             row,
           }
         })
+      const currentCard = cardsWithCurrent.find((card) => normalizeId(card._id) === currentBaseId)
+      const cards = cardsWithCurrent.filter((card) => normalizeId(card._id) !== currentBaseId)
 
       if (!cancelled) {
         setLogicalCanvasHeight(desktopHeight)
         setReferenceCards(cards)
+        setActiveAutoPlacement(
+          currentCard
+            ? {
+                x: currentCard.x,
+                y: currentCard.y,
+                width: currentCard.width,
+                z: currentCard.z,
+                preferred: currentCard.preferred,
+                topPx: currentCard.topPx,
+                offsetX: currentCard.offsetX,
+                offsetY: currentCard.offsetY,
+              }
+            : null
+        )
       }
     }
 
     loadReferenceCards().catch(() => {
-      if (!cancelled) setReferenceCards([])
+      if (!cancelled) {
+        setReferenceCards([])
+        setActiveAutoPlacement(null)
+      }
     })
 
     return () => {
       cancelled = true
     }
   }, [client, currentDocumentId, documentValue?.mainImage, documentValue?.previewLayout, documentValue?.title])
+
+  const BASE_CANVAS_WIDTH = viewportWidth
+  const BASE_CANVAS_HEIGHT = Math.round(logicalCanvasHeight * canvasHeightScale)
+
+  useEffect(() => {
+    const viewport = viewportRef.current
+    if (!viewport || !fitToViewport) return
+
+    const updateFitZoom = () => {
+      const availableWidth = viewport.clientWidth - 28
+      if (availableWidth <= 0) return
+      const fitZoom = clamp(availableWidth / BASE_CANVAS_WIDTH, 0.3, 1.4)
+      setCanvasZoom(fitZoom)
+    }
+
+    updateFitZoom()
+    const observer = new ResizeObserver(updateFitZoom)
+    observer.observe(viewport)
+    return () => observer.disconnect()
+  }, [BASE_CANVAS_HEIGHT, BASE_CANVAS_WIDTH, fitToViewport, viewportWidth])
+
+  const currentLayout = useMemo<LayoutValues>(() => {
+    if (!isManualLayout(props.value) && activeAutoPlacement) {
+      return {
+        x: activeAutoPlacement.x,
+        y: activeAutoPlacement.y,
+        width: activeAutoPlacement.width,
+        z: activeAutoPlacement.z,
+        preferred: activeAutoPlacement.preferred,
+      }
+    }
+    return activeLayout
+  }, [activeAutoPlacement, activeLayout, props.value])
+
+  const activeCardStyle = useMemo(() => {
+    if (!isManualLayout(props.value) && activeAutoPlacement) {
+      return {
+        top:
+          typeof activeAutoPlacement.topPx === 'number'
+            ? `${activeAutoPlacement.topPx * canvasHeightScale * canvasZoom}px`
+            : `${currentLayout.y}%`,
+        left: `${currentLayout.x}%`,
+        width: `${currentLayout.width}%`,
+        transform: `translate(${activeAutoPlacement.offsetX * canvasZoom}px, ${activeAutoPlacement.offsetY * canvasZoom}px)`,
+      }
+    }
+    return {
+      top: `${currentLayout.y}%`,
+      left: `${currentLayout.x}%`,
+      width: `${currentLayout.width}%`,
+      transform: 'translate(0px, 0px)',
+    }
+  }, [activeAutoPlacement, canvasHeightScale, canvasZoom, currentLayout, props.value])
 
   const applyLayoutPatch = useCallback(
     (nextValues: Partial<LayoutValues>) => {
@@ -440,13 +575,13 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
         mode,
         startClientX: event.clientX,
         startClientY: event.clientY,
-        startLayout: activeLayout,
+        startLayout: currentLayout,
         rectWidth: rect.width,
         rectHeight: rect.height,
       }
       setIsDragging(true)
     },
-    [activeLayout]
+    [currentLayout]
   )
 
   const applyPresetValues = useCallback(() => {
@@ -484,29 +619,29 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
 
       if (altKey) {
         if (key === 'ArrowUp' || key === 'ArrowRight') {
-          applyLayoutPatch({ z: activeLayout.z + 1 })
+          applyLayoutPatch({ z: currentLayout.z + 1 })
         } else if (key === 'ArrowDown' || key === 'ArrowLeft') {
-          applyLayoutPatch({ z: activeLayout.z - 1 })
+          applyLayoutPatch({ z: currentLayout.z - 1 })
         } else {
           handled = false
         }
       } else if (shiftKey && (key === 'ArrowLeft' || key === 'ArrowRight')) {
         applyLayoutPatch({
-          width: activeLayout.width + (key === 'ArrowRight' ? moveStep : -moveStep),
+          width: currentLayout.width + (key === 'ArrowRight' ? moveStep : -moveStep),
         })
       } else {
         switch (key) {
           case 'ArrowLeft':
-            applyLayoutPatch({ x: activeLayout.x - moveStep })
+            applyLayoutPatch({ x: currentLayout.x - moveStep })
             break
           case 'ArrowRight':
-            applyLayoutPatch({ x: activeLayout.x + moveStep })
+            applyLayoutPatch({ x: currentLayout.x + moveStep })
             break
           case 'ArrowUp':
-            applyLayoutPatch({ y: activeLayout.y - moveStep })
+            applyLayoutPatch({ y: currentLayout.y - moveStep })
             break
           case 'ArrowDown':
-            applyLayoutPatch({ y: activeLayout.y + moveStep })
+            applyLayoutPatch({ y: currentLayout.y + moveStep })
             break
           default:
             handled = false
@@ -516,13 +651,18 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
 
       if (handled) event.preventDefault()
     },
-    [activeLayout, applyLayoutPatch]
+    [applyLayoutPatch, currentLayout]
   )
 
-  const BASE_CANVAS_WIDTH = 1200
-  const BASE_CANVAS_HEIGHT = logicalCanvasHeight
   const canvasWidth = Math.round(BASE_CANVAS_WIDTH * canvasZoom)
   const canvasHeight = Math.round(BASE_CANVAS_HEIGHT * canvasZoom)
+  const scenePadding = useMemo(() => {
+    const padding = getDesktopScenePadding(viewportWidth)
+    return {
+      left: padding.left * canvasZoom,
+      right: padding.right * canvasZoom,
+    }
+  }, [canvasZoom, viewportWidth])
 
   return (
     <Stack space={3}>
@@ -546,76 +686,123 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             <Button
               mode="ghost"
               text="Nudge Left"
-              onClick={() => applyLayoutPatch({ x: activeLayout.x - 1 })}
+              onClick={() => applyLayoutPatch({ x: currentLayout.x - 1 })}
             />
             <Button
               mode="ghost"
               text="Nudge Right"
-              onClick={() => applyLayoutPatch({ x: activeLayout.x + 1 })}
+              onClick={() => applyLayoutPatch({ x: currentLayout.x + 1 })}
             />
             <Button
               mode="ghost"
               text="Nudge Up"
-              onClick={() => applyLayoutPatch({ y: activeLayout.y - 1 })}
+              onClick={() => applyLayoutPatch({ y: currentLayout.y - 1 })}
             />
             <Button
               mode="ghost"
               text="Nudge Down"
-              onClick={() => applyLayoutPatch({ y: activeLayout.y + 1 })}
+              onClick={() => applyLayoutPatch({ y: currentLayout.y + 1 })}
             />
             <Button
               mode="ghost"
               text="Z -"
-              onClick={() => applyLayoutPatch({ z: activeLayout.z - 1 })}
+              onClick={() => applyLayoutPatch({ z: currentLayout.z - 1 })}
             />
             <Button
               mode="ghost"
               text="Z +"
-              onClick={() => applyLayoutPatch({ z: activeLayout.z + 1 })}
+              onClick={() => applyLayoutPatch({ z: currentLayout.z + 1 })}
             />
           </Flex>
 
           <Flex gap={2} align="center" wrap="wrap">
+            {VIEWPORT_PRESETS.map((item) => (
+              <Button
+                key={item.width}
+                mode={viewportWidth === item.width ? 'default' : 'ghost'}
+                text={`${item.label} ${item.width}`}
+                onClick={() => {
+                  setFitToViewport(false)
+                  setCanvasZoom(1)
+                  setViewportWidth(item.width)
+                }}
+              />
+            ))}
+            <Text size={1} muted>
+              Viewport
+            </Text>
+            <Button mode={fitToViewport ? 'default' : 'ghost'} text="Fit" onClick={() => setFitToViewport(true)} />
+          </Flex>
+
+          <Flex gap={2} align="center" wrap="wrap">
             <Button
-              mode={activeLayout.preferred === 'any' ? 'default' : 'ghost'}
+              mode={currentLayout.preferred === 'any' ? 'default' : 'ghost'}
               text="Orient: Auto"
               onClick={() => applyLayoutPatch({ preferred: 'any' })}
             />
             <Button
-              mode={activeLayout.preferred === 'portrait' ? 'default' : 'ghost'}
+              mode={currentLayout.preferred === 'portrait' ? 'default' : 'ghost'}
               text="Orient: Verticale"
               onClick={() => applyLayoutPatch({ preferred: 'portrait' })}
             />
             <Button
-              mode={activeLayout.preferred === 'landscape' ? 'default' : 'ghost'}
+              mode={currentLayout.preferred === 'landscape' ? 'default' : 'ghost'}
               text="Orient: Orizzontale"
               onClick={() => applyLayoutPatch({ preferred: 'landscape' })}
             />
             <Button
               mode="ghost"
               text="Zoom -"
-              onClick={() => setCanvasZoom((prev) => clamp(prev - 0.1, 0.3, 1.4))}
+              onClick={() => {
+                setFitToViewport(false)
+                setCanvasZoom((prev) => clamp(prev - 0.1, 0.3, 1.4))
+              }}
             />
             <Button
               mode="ghost"
               text="Zoom 100%"
-              onClick={() => setCanvasZoom(1)}
+              onClick={() => {
+                setFitToViewport(false)
+                setCanvasZoom(1)
+              }}
             />
             <Button
               mode="ghost"
               text="Zoom +"
-              onClick={() => setCanvasZoom((prev) => clamp(prev + 0.1, 0.3, 1.4))}
+              onClick={() => {
+                setFitToViewport(false)
+                setCanvasZoom((prev) => clamp(prev + 0.1, 0.3, 1.4))
+              }}
             />
             <Text size={1} muted>
               {Math.round(canvasZoom * 100)}%
             </Text>
+            <Button
+              mode="ghost"
+              text="Height -"
+              onClick={() => setCanvasHeightScale((prev) => clamp(prev - 0.04, 0.7, 1.2))}
+            />
+            <Button
+              mode="ghost"
+              text="Height 100%"
+              onClick={() => setCanvasHeightScale(1)}
+            />
+            <Button
+              mode="ghost"
+              text="Height +"
+              onClick={() => setCanvasHeightScale((prev) => clamp(prev + 0.04, 0.7, 1.2))}
+            />
+            <Text size={1} muted>
+              H {Math.round(canvasHeightScale * 100)}%
+            </Text>
           </Flex>
 
           <Box
+            ref={viewportRef}
             style={{
               overflow: 'auto',
               maxWidth: '100%',
-              maxHeight: '70vh',
+              maxHeight: '82vh',
               paddingBottom: '0.2rem',
               border: '1px solid rgba(26,24,20,0.1)',
             }}
@@ -636,172 +823,194 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
                 outline: 'none',
               }}
             >
-            <Box
-              style={{
-                position: 'absolute',
-                inset: 0,
-                backgroundImage:
-                  'linear-gradient(to right, rgba(26,24,20,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(26,24,20,0.08) 1px, transparent 1px)',
-                backgroundSize: '10% 10%',
-              }}
-            />
-
-            {(Object.keys(PRESET_VALUES) as Array<Exclude<PresetKey, 'auto'>>).map((key) => {
-              const slot = PRESET_VALUES[key]
-              const isActivePreset = preset === key
-              const ratio = slot.preferred === 'landscape' ? '3 / 2' : '2 / 3'
-              return (
-                <Box
-                  key={key}
-                  style={{
-                    position: 'absolute',
-                    top: `${slot.y}%`,
-                    left: `${slot.x}%`,
-                    width: `${slot.width}%`,
-                    aspectRatio: ratio,
-                    border: isActivePreset
-                      ? '1px dashed rgba(9,108,255,0.85)'
-                      : '1px dashed rgba(26,24,20,0.28)',
-                    background: isActivePreset
-                      ? 'rgba(9,108,255,0.09)'
-                      : 'rgba(26,24,20,0.04)',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <Box
-                    style={{
-                      position: 'absolute',
-                      right: '4px',
-                      top: '4px',
-                      fontSize: '10px',
-                      letterSpacing: '0.05em',
-                      color: isActivePreset ? 'rgba(9,108,255,0.9)' : 'rgba(26,24,20,0.64)',
-                    }}
-                  >
-                    {PRESET_LABELS[key]}
-                  </Box>
-                </Box>
-              )
-            })}
-
-            {referenceCards.map((card) => (
-              <Box
-                key={card._id}
-                style={{
-                  position: 'absolute',
-                  top: typeof card.topPx === 'number' ? `${card.topPx}px` : `${card.y}%`,
-                  left: `${card.x}%`,
-                  width: `${card.width}%`,
-                  aspectRatio: card.aspectRatio,
-                  border: '1px solid rgba(26,24,20,0.28)',
-                  boxShadow: '0 4px 10px rgba(26,24,20,0.12)',
-                  zIndex: card.z,
-                  overflow: 'hidden',
-                  opacity: 0.56,
-                  pointerEvents: 'none',
-                  filter: 'saturate(0.8)',
-                }}
-              >
-                {card.imageUrl ? (
-                  <img
-                    src={card.imageUrl}
-                    alt={card.title}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
-                ) : (
-                  <Box
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      background: 'rgba(26,24,20,0.12)',
-                    }}
-                  />
-                )}
-              </Box>
-            ))}
-
-            <Box
-              style={{
-                position: 'absolute',
-                top: `${activeLayout.y}%`,
-                left: `${activeLayout.x}%`,
-                width: `${activeLayout.width}%`,
-                aspectRatio: getPreviewAspectRatio(activeLayout.preferred),
-                minHeight: '60px',
-                border: '1px solid rgba(26,24,20,0.5)',
-                boxShadow: '0 6px 16px rgba(26,24,20,0.18)',
-                cursor: isDragging ? 'grabbing' : 'grab',
-                userSelect: 'none',
-                touchAction: 'none',
-                zIndex: activeLayout.z,
-                overflow: 'hidden',
-              }}
-              onPointerDown={(event) => startDrag(event, 'move')}
-            >
-              {previewImageUrl ? (
-                <img
-                  src={previewImageUrl}
-                  alt="Anteprima layout"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
-                />
-              ) : (
-                <Box
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background:
-                      'linear-gradient(135deg, rgba(26,24,20,0.12) 0%, rgba(26,24,20,0.06) 100%)',
-                  }}
-                />
-              )}
               <Box
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.14) 100%)',
-                  pointerEvents: 'none',
+                  backgroundImage:
+                    'linear-gradient(to right, rgba(26,24,20,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(26,24,20,0.08) 1px, transparent 1px)',
+                  backgroundSize: '10% 10%',
                 }}
               />
+
               <Box
                 style={{
                   position: 'absolute',
-                  left: '8px',
-                  top: '8px',
-                  fontSize: '11px',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: 'rgba(26,24,20,0.9)',
-                  background: 'rgba(255,255,255,0.65)',
-                  padding: '2px 6px',
+                  top: 0,
+                  bottom: 0,
+                  left: `${scenePadding.left}px`,
+                  right: `${scenePadding.right}px`,
                 }}
               >
-                Drag
-              </Box>
-              <Box
-                style={{
-                  position: 'absolute',
-                  right: '6px',
-                  bottom: '6px',
-                  width: '14px',
-                  height: '14px',
-                  background: 'rgba(26,24,20,0.78)',
-                  borderRadius: '2px',
-                  cursor: 'nwse-resize',
-                }}
-                onPointerDown={(event) => startDrag(event, 'resize')}
-              />
-            </Box>
+                <Box
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                >
+                  {(Object.keys(PRESET_VALUES) as Array<Exclude<PresetKey, 'auto'>>).map((key) => {
+                    const slot = PRESET_VALUES[key]
+                    const isActivePreset = preset === key
+                    const ratio = slot.preferred === 'landscape' ? '3 / 2' : '2 / 3'
+                    return (
+                      <Box
+                        key={key}
+                        style={{
+                          position: 'absolute',
+                          top: `${slot.y}%`,
+                          left: `${slot.x}%`,
+                          width: `${slot.width}%`,
+                          aspectRatio: ratio,
+                          border: isActivePreset
+                            ? '1px dashed rgba(9,108,255,0.85)'
+                            : '1px dashed rgba(26,24,20,0.28)',
+                          background: isActivePreset
+                            ? 'rgba(9,108,255,0.09)'
+                            : 'rgba(26,24,20,0.04)',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        <Box
+                          style={{
+                            position: 'absolute',
+                            right: '4px',
+                            top: '4px',
+                            fontSize: '10px',
+                            letterSpacing: '0.05em',
+                            color: isActivePreset ? 'rgba(9,108,255,0.9)' : 'rgba(26,24,20,0.64)',
+                          }}
+                        >
+                          {PRESET_LABELS[key]}
+                        </Box>
+                      </Box>
+                    )
+                  })}
 
+                  {referenceCards.map((card) => (
+                    <Box
+                      key={card._id}
+                      style={{
+                        position: 'absolute',
+                        top:
+                          typeof card.topPx === 'number'
+                            ? `${card.topPx * canvasHeightScale * canvasZoom}px`
+                            : `${card.y}%`,
+                        left: `${card.x}%`,
+                        width: `${card.width}%`,
+                        aspectRatio: card.aspectRatio,
+                        border: '1px solid rgba(26,24,20,0.28)',
+                        boxShadow: '0 4px 10px rgba(26,24,20,0.12)',
+                        zIndex: card.z,
+                        overflow: 'hidden',
+                        opacity: 0.56,
+                        pointerEvents: 'none',
+                        filter: 'saturate(0.8)',
+                        transform: `translate(${card.offsetX * canvasZoom}px, ${card.offsetY * canvasZoom}px)`,
+                      }}
+                    >
+                      {card.imageUrl ? (
+                        <img
+                          src={card.imageUrl}
+                          alt={card.title}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            background: 'rgba(26,24,20,0.12)',
+                          }}
+                        />
+                      )}
+                    </Box>
+                  ))}
+
+                  <Box
+                    style={{
+                      position: 'absolute',
+                      top: activeCardStyle.top,
+                      left: activeCardStyle.left,
+                      width: activeCardStyle.width,
+                      aspectRatio: activeImageAspectRatio,
+                      minHeight: '60px',
+                      border: '1px solid rgba(26,24,20,0.5)',
+                      boxShadow: '0 6px 16px rgba(26,24,20,0.18)',
+                      cursor: isDragging ? 'grabbing' : 'grab',
+                      userSelect: 'none',
+                      touchAction: 'none',
+                      zIndex: currentLayout.z,
+                      overflow: 'hidden',
+                      transform: activeCardStyle.transform,
+                    }}
+                    onPointerDown={(event) => startDrag(event, 'move')}
+                  >
+                    {previewImageUrl ? (
+                      <img
+                        src={previewImageUrl}
+                        alt="Anteprima layout"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background:
+                            'linear-gradient(135deg, rgba(26,24,20,0.12) 0%, rgba(26,24,20,0.06) 100%)',
+                        }}
+                      />
+                    )}
+                    <Box
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,0.14) 100%)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <Box
+                      style={{
+                        position: 'absolute',
+                        left: '8px',
+                        top: '8px',
+                        fontSize: '11px',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(26,24,20,0.9)',
+                        background: 'rgba(255,255,255,0.65)',
+                        padding: '2px 6px',
+                      }}
+                    >
+                      Drag
+                    </Box>
+                    <Box
+                      style={{
+                        position: 'absolute',
+                        right: '6px',
+                        bottom: '6px',
+                        width: '14px',
+                        height: '14px',
+                        background: 'rgba(26,24,20,0.78)',
+                        borderRadius: '2px',
+                        cursor: 'nwse-resize',
+                      }}
+                      onPointerDown={(event) => startDrag(event, 'resize')}
+                    />
+                  </Box>
+                </Box>
+              </Box>
             </Box>
           </Box>
 
@@ -809,7 +1018,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             <Button mode="ghost" text="Preset -> Valori" disabled={preset === 'auto'} onClick={applyPresetValues} />
             <Button mode="ghost" text="Reset Override" onClick={clearManualOverrides} />
             <Text size={1} muted>
-              X {activeLayout.x.toFixed(0)}% - Y {activeLayout.y.toFixed(0)}% - W {activeLayout.width.toFixed(0)}% - Z {activeLayout.z} - {activeLayout.preferred}
+              X {currentLayout.x.toFixed(0)}% - Y {currentLayout.y.toFixed(0)}% - W {currentLayout.width.toFixed(0)}% - Z {currentLayout.z} - {currentLayout.preferred}
             </Text>
           </Flex>
         </Stack>

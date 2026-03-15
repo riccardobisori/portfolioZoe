@@ -53,8 +53,27 @@ const PREVIEW_LAYOUT_PRESETS: Record<Exclude<MoodboardPresetKey, 'auto'>, Moodbo
     rightNarrowBottom: MOODBOARD_SLOTS[7],
 }
 
+const MOODBOARD_BASE_HEIGHT = 1220
+const MOODBOARD_ROW_HEIGHT = 560
+
 function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value))
+}
+
+function parseImageDimensionsFromRef(imageRef?: string) {
+    if (!imageRef) return null
+    const match = imageRef.match(/-(\d+)x(\d+)-/)
+    if (!match) return null
+    const width = Number(match[1])
+    const height = Number(match[2])
+    if (!width || !height) return null
+    return { width, height }
+}
+
+function getCardAspectRatio(work: WorkWithUrl, preferred: MoodboardSlot['preferred']) {
+    const fromImage = parseImageDimensionsFromRef(work.mainImage?.asset?._ref)
+    if (fromImage) return `${fromImage.width} / ${fromImage.height}`
+    return preferred === 'portrait' ? '2 / 3' : '3 / 2'
 }
 
 function hasManualLayout(work: WorkWithUrl) {
@@ -160,12 +179,7 @@ function MoodboardCard({
         : slot.preferred === 'landscape'
             ? (evenRow ? -2 : 4)
             : (evenRow ? -1 : 3)
-    const maxCardHeight = work.isLandscape
-        ? 'clamp(220px, 26vw, 420px)'
-        : 'clamp(305px, 38.5vw, 530px)'
-    const minCardWidth = work.isLandscape
-        ? 'clamp(265px, 28vw, 405px)'
-        : 'clamp(185px, 20vw, 270px)'
+    const aspectRatio = getCardAspectRatio(work, slot.preferred)
 
     return (
         <Link
@@ -178,8 +192,7 @@ function MoodboardCard({
                 position: 'absolute',
                 top,
                 left: slot.left,
-                width: 'fit-content',
-                maxWidth: slot.width,
+                width: slot.width,
                 textDecoration: 'none',
                 color: 'inherit',
                 zIndex: isHovered ? 120 : hasManualPosition ? slot.z : slot.z + row * 8,
@@ -194,8 +207,8 @@ function MoodboardCard({
             <div
                 style={{
                     position: 'relative',
-                    width: 'fit-content',
-                    maxWidth: '100%',
+                    width: '100%',
+                    aspectRatio,
                 }}
             >
                 {work.imageUrl && (
@@ -203,14 +216,12 @@ function MoodboardCard({
                         src={work.imageUrl}
                         alt={work.title}
                         style={{
-                            width: 'auto',
-                            height: 'auto',
-                            maxWidth: '100%',
-                            minWidth: minCardWidth,
-                            maxHeight: maxCardHeight,
+                            width: '100%',
+                            height: '100%',
                             display: 'block',
                             borderRadius: '1px',
                             border: '1px solid rgba(0, 0, 0, 0.28)',
+                            objectFit: 'cover',
                             boxShadow: isHovered
                                 ? '0 36px 72px rgba(26, 24, 20, 0.34)'
                                 : '0 10px 24px rgba(26, 24, 20, 0.14)',
@@ -294,9 +305,8 @@ export default function MixedPreviewSection({
 
     const rows = Math.ceil(arrangedWorks.length / MOODBOARD_SLOTS.length)
     const desktopCanvasHeight = useMemo(() => {
-        const baseHeight = 1220
         const extraRows = Math.max(rows - 1, 0)
-        return `${baseHeight + extraRows * 560}px`
+        return `${MOODBOARD_BASE_HEIGHT + extraRows * MOODBOARD_ROW_HEIGHT}px`
     }, [rows])
 
     if (works.length === 0) return null
