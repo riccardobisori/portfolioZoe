@@ -17,7 +17,10 @@ export interface ProjectPreviewLayout extends ProjectPreviewLayoutValues {
     // Override opzionali per breakpoint desktop.
     responsive?: {
         desktop1024?: ProjectPreviewLayoutValues | null
+        desktop1280?: ProjectPreviewLayoutValues | null
         desktop1440?: ProjectPreviewLayoutValues | null
+        desktop1512?: ProjectPreviewLayoutValues | null
+        desktop1536?: ProjectPreviewLayoutValues | null
         desktop1920?: ProjectPreviewLayoutValues | null
     } | null
 }

@@ -138,10 +138,14 @@ export default function Hero({ heroImage }: HeroProps) {
         return () => observer.disconnect()
     }, [])
 
-    // Costruiamo l'URL immagine ad alta risoluzione per evitare perdita su mobile high-DPR.
-    const imageUrl = heroImage
-        ? urlFor(heroImage).width(3200).quality(95).url()
+    // URL dedicati per ridurre l'upscaling sui device ad alta densita.
+    const desktopImageUrl = heroImage
+        ? urlFor(heroImage).width(5200).quality(100).format('jpg').url()
         : null
+    const mobileImageUrl = heroImage
+        ? urlFor(heroImage).width(3200).quality(100).format('jpg').url()
+        : null
+    const imageUrl = isTouchDevice ? mobileImageUrl : desktopImageUrl
 
     const showArrow = !isTouchDevice && expandProgress >= 0.985
 
@@ -213,7 +217,7 @@ export default function Hero({ heroImage }: HeroProps) {
                         alt="Ginevra Zoe Giannelli"
                         fill
                         priority
-                        quality={95}
+                        unoptimized
                         sizes="100vw"
                         style={{
                             objectFit: 'cover',
@@ -260,61 +264,59 @@ export default function Hero({ heroImage }: HeroProps) {
                     : 'clamp(3rem, 8vw, 6rem)',
                 pointerEvents: 'auto',
             }}>
-                <div
-                    ref={titleRef}
-                    style={{
-                        position: 'absolute',
-                        left: lockTitleOnRight ? 'auto' : titleLeft,
-                        right: lockTitleOnRight ? titleEdgeMargin : 'auto',
-                        bottom: isTouchDevice
-                            ? 'calc(clamp(3.8rem, 9vw, 4.8rem) + env(safe-area-inset-bottom, 0px))'
-                            : 'clamp(3rem, 8vw, 6rem)',
-                        width: isTouchDevice ? resolvedTitleWidth : 'fit-content',
-                        willChange: 'left',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isTouchDevice ? 'flex-start' : 'center',
-                        color: heroTextColor,
-                        transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
-                        transitionDelay: showArrow ? '220ms' : '0ms',
-                        WebkitFontSmoothing: 'antialiased',
-                    }}
-                >
-                    <p style={{
-                        fontSize: isTouchDevice ? '0.56rem' : '0.58rem',
-                        letterSpacing: isTouchDevice ? '0.28em' : '0.45em',
-                        textTransform: 'uppercase',
-                        color: 'inherit',
-                        marginBottom: isTouchDevice ? '0.95rem' : '1.25rem',
-                        textAlign: 'left',
-                        width: '100%',
-                    }}>
-                        Ginevra Zoe Giannelli
-                    </p>
-
-                    <h1 style={{
-                        fontSize: isTouchDevice
-                            ? 'clamp(2.2rem, 13vw, 3.6rem)'
-                            : 'clamp(3.5rem, 6vw, 7rem)',
-                        fontWeight: 400,
-                        letterSpacing: isTouchDevice ? '0.03em' : '0.05em',
-                        lineHeight: isTouchDevice ? 1 : 1.05,
-                        color: 'inherit',
-                        textTransform: 'uppercase',
-                        textAlign: isTouchDevice ? 'left' : 'center',
-                        margin: 0,
-                        width: '100%',
-                    }}>
-                        Visual<br />
-                        <span style={{
-                            fontWeight: 400,
-                            letterSpacing: '0.003em',
+                {!isTouchDevice && (
+                    <div
+                        ref={titleRef}
+                        style={{
+                            position: 'absolute',
+                            left: lockTitleOnRight ? 'auto' : titleLeft,
+                            right: lockTitleOnRight ? titleEdgeMargin : 'auto',
+                            bottom: 'clamp(3rem, 8vw, 6rem)',
+                            width: 'fit-content',
+                            willChange: 'left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            color: heroTextColor,
+                            transition: 'color 2800ms cubic-bezier(0.16, 1, 0.3, 1)',
+                            transitionDelay: showArrow ? '220ms' : '0ms',
+                            WebkitFontSmoothing: 'antialiased',
+                        }}
+                    >
+                        <p style={{
+                            fontSize: '0.58rem',
+                            letterSpacing: '0.45em',
+                            textTransform: 'uppercase',
                             color: 'inherit',
+                            marginBottom: '1.25rem',
+                            textAlign: 'left',
+                            width: '100%',
                         }}>
-                            Works
-                        </span>
-                    </h1>
-                </div>
+                            Ginevra Zoe Giannelli
+                        </p>
+
+                        <h1 style={{
+                            fontSize: 'clamp(3.5rem, 6vw, 7rem)',
+                            fontWeight: 400,
+                            letterSpacing: '0.05em',
+                            lineHeight: 1.05,
+                            color: 'inherit',
+                            textTransform: 'uppercase',
+                            textAlign: 'center',
+                            margin: 0,
+                            width: '100%',
+                        }}>
+                            Visual<br />
+                            <span style={{
+                                fontWeight: 400,
+                                letterSpacing: '0.003em',
+                                color: 'inherit',
+                            }}>
+                                Works
+                            </span>
+                        </h1>
+                    </div>
+                )}
 
                 <div
                     className="hidden md:block"

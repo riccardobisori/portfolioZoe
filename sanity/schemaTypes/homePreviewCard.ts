@@ -133,8 +133,98 @@ const homePreviewCard = {
                             ],
                         },
                         {
+                            name: 'desktop1280',
+                            title: 'Wide Laptop 1280',
+                            type: 'object',
+                            options: { collapsible: true, collapsed: true },
+                            fields: [
+                                {
+                                    name: 'preset',
+                                    title: 'Preset posizione',
+                                    type: 'string',
+                                    options: { list: PRESET_POSITION_OPTIONS },
+                                },
+                                { name: 'x', title: 'X (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(0).max(90) },
+                                { name: 'y', title: 'Y (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(0).max(95) },
+                                { name: 'width', title: 'Larghezza (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(10).max(45) },
+                                { name: 'z', title: 'Profondita z-index', type: 'number', validation: (Rule: ValidationRule) => Rule.min(1).max(10) },
+                                {
+                                    name: 'preferred',
+                                    title: 'Preferenza orientamento',
+                                    type: 'string',
+                                    options: {
+                                        list: [
+                                            { title: 'Auto', value: 'any' },
+                                            { title: 'Orizzontale', value: 'landscape' },
+                                            { title: 'Verticale', value: 'portrait' },
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                        {
                             name: 'desktop1440',
                             title: 'Desktop 1440',
+                            type: 'object',
+                            options: { collapsible: true, collapsed: true },
+                            fields: [
+                                {
+                                    name: 'preset',
+                                    title: 'Preset posizione',
+                                    type: 'string',
+                                    options: { list: PRESET_POSITION_OPTIONS },
+                                },
+                                { name: 'x', title: 'X (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(0).max(90) },
+                                { name: 'y', title: 'Y (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(0).max(95) },
+                                { name: 'width', title: 'Larghezza (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(10).max(45) },
+                                { name: 'z', title: 'Profondita z-index', type: 'number', validation: (Rule: ValidationRule) => Rule.min(1).max(10) },
+                                {
+                                    name: 'preferred',
+                                    title: 'Preferenza orientamento',
+                                    type: 'string',
+                                    options: {
+                                        list: [
+                                            { title: 'Auto', value: 'any' },
+                                            { title: 'Orizzontale', value: 'landscape' },
+                                            { title: 'Verticale', value: 'portrait' },
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                        {
+                            name: 'desktop1512',
+                            title: 'MBP 14 1512',
+                            type: 'object',
+                            options: { collapsible: true, collapsed: true },
+                            fields: [
+                                {
+                                    name: 'preset',
+                                    title: 'Preset posizione',
+                                    type: 'string',
+                                    options: { list: PRESET_POSITION_OPTIONS },
+                                },
+                                { name: 'x', title: 'X (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(0).max(90) },
+                                { name: 'y', title: 'Y (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(0).max(95) },
+                                { name: 'width', title: 'Larghezza (%)', type: 'number', validation: (Rule: ValidationRule) => Rule.min(10).max(45) },
+                                { name: 'z', title: 'Profondita z-index', type: 'number', validation: (Rule: ValidationRule) => Rule.min(1).max(10) },
+                                {
+                                    name: 'preferred',
+                                    title: 'Preferenza orientamento',
+                                    type: 'string',
+                                    options: {
+                                        list: [
+                                            { title: 'Auto', value: 'any' },
+                                            { title: 'Orizzontale', value: 'landscape' },
+                                            { title: 'Verticale', value: 'portrait' },
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                        {
+                            name: 'desktop1536',
+                            title: 'Laptop FHD 1536',
                             type: 'object',
                             options: { collapsible: true, collapsed: true },
                             fields: [

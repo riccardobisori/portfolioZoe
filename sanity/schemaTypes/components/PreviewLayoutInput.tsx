@@ -97,7 +97,13 @@ type DocumentWithImage = {
   previewLayout?: PreviewLayoutRaw
 }
 
-type DesktopBreakpointKey = 'desktop1024' | 'desktop1440' | 'desktop1920'
+type DesktopBreakpointKey =
+  | 'desktop1024'
+  | 'desktop1280'
+  | 'desktop1440'
+  | 'desktop1512'
+  | 'desktop1536'
+  | 'desktop1920'
 
 type PreviewLayoutRaw = {
   preset?: PresetKey
@@ -219,8 +225,11 @@ function parseImageDimensionsFromRef(imageRef?: string) {
 }
 
 function getBreakpointForViewport(viewportWidth: number): DesktopBreakpointKey {
-  if (viewportWidth >= 1760) return 'desktop1920'
-  if (viewportWidth >= 1366) return 'desktop1440'
+  if (viewportWidth >= 1920) return 'desktop1920'
+  if (viewportWidth >= 1536) return 'desktop1536'
+  if (viewportWidth >= 1512) return 'desktop1512'
+  if (viewportWidth >= 1440) return 'desktop1440'
+  if (viewportWidth >= 1280) return 'desktop1280'
   return 'desktop1024'
 }
 

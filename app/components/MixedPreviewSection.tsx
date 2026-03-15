@@ -33,7 +33,13 @@ type MoodboardPresetKey =
     | 'rightThird'
     | 'rightNarrowThird'
 
-type DesktopBreakpointKey = 'desktop1024' | 'desktop1440' | 'desktop1920'
+type DesktopBreakpointKey =
+    | 'desktop1024'
+    | 'desktop1280'
+    | 'desktop1440'
+    | 'desktop1512'
+    | 'desktop1536'
+    | 'desktop1920'
 
 // Slot "base" della moodboard desktop.
 // Ogni slot definisce posizione, ingombro e priorità di orientamento.
@@ -339,8 +345,11 @@ export default function MixedPreviewSection({
         const update = () => {
             const width = window.innerWidth
             setIsDesktop(width >= 1024)
-            if (width >= 1760) setDesktopBreakpoint('desktop1920')
-            else if (width >= 1366) setDesktopBreakpoint('desktop1440')
+            if (width >= 1920) setDesktopBreakpoint('desktop1920')
+            else if (width >= 1536) setDesktopBreakpoint('desktop1536')
+            else if (width >= 1512) setDesktopBreakpoint('desktop1512')
+            else if (width >= 1440) setDesktopBreakpoint('desktop1440')
+            else if (width >= 1280) setDesktopBreakpoint('desktop1280')
             else setDesktopBreakpoint('desktop1024')
         }
 
