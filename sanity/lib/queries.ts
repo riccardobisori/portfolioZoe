@@ -1,49 +1,29 @@
 import { groq } from 'next-sanity'
 
-// Query per i lavori in evidenza — usata nella homepage
-// *[...] = prendi tutti i documenti che soddisfano la condizione
-// _type == "work" = solo documenti di tipo work
-// featured == true = solo quelli in evidenza
-// | order(date desc) = ordinati per data, più recenti prima
-export const featuredWorksQuery = groq`
-  *[_type == "work" && featured == true] | order(date desc) {
+// Query di tutti i progetti.
+export const allProjectsQuery = groq`
+  *[_type == "project"] | order(date desc) {
     _id,
     title,
     slug,
-    "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
-    year,
-    mainImage,
-    // Dati layout manuale per la moodboard home.
-    previewLayout
-  }
-`
-
-// Query per tutti i lavori — usata nella pagina galleria
-export const allWorksQuery = groq`
-  *[_type == "work"] | order(date desc) {
-    _id,
-    title,
-    slug,
-    "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
+    "kind": select(kind == "series" => "series", "work"),
     year,
     description,
     mainImage
   }
 `
 
-// Query per un singolo lavoro tramite slug — usata nella pagina dettaglio
-// $slug è un parametro che passiamo alla query — come un prepared statement SQL
-export const workBySlugQuery = groq`
-  *[_type == "work" && slug.current == $slug][0] {
+// Query progetto singolo tramite slug.
+export const projectBySlugQuery = groq`
+  *[_type == "project" && slug.current == $slug][0] {
     _id,
     title,
     slug,
-    "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
+    "kind": select(kind == "series" => "series", "work"),
     year,
     description,
     mainImage,
-    gallery,
-    previewLayout
+    gallery
   }
 `
 
@@ -66,10 +46,9 @@ export const homePreviewCardsQuery = groq`
       _id,
       title,
       slug,
-      "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
+      "kind": select(kind == "series" => "series", "work"),
       year,
-      mainImage,
-      previewLayout
+      mainImage
     }
   }
 `

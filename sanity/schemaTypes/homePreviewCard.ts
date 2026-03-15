@@ -1,8 +1,27 @@
+import PreviewLayoutInput from './components/PreviewLayoutInput'
+import type { ReactNode } from 'react'
+
 type ValidationRule = {
     required: () => ValidationRule
     min: (value: number) => ValidationRule
     max: (value: number) => ValidationRule
 }
+
+const PRESET_POSITION_OPTIONS = [
+    { title: 'Auto', value: 'auto' },
+    { title: 'Sinistra Alta', value: 'leftTop' },
+    { title: 'Centro Alto', value: 'centerTop' },
+    { title: 'Destra Alta', value: 'rightTop' },
+    { title: 'Destra Stretta Alta', value: 'rightNarrowTop' },
+    { title: 'Sinistra Centro', value: 'leftBottom' },
+    { title: 'Centro', value: 'centerBottom' },
+    { title: 'Destra Centro', value: 'rightBottom' },
+    { title: 'Destra Stretta Centro', value: 'rightNarrowBottom' },
+    { title: 'Sinistra Bassa', value: 'leftThird' },
+    { title: 'Centro Basso', value: 'centerThird' },
+    { title: 'Destra Bassa', value: 'rightThird' },
+    { title: 'Destra Stretta Bassa', value: 'rightNarrowThird' },
+]
 
 const homePreviewCard = {
     name: 'homePreviewCard',
@@ -13,7 +32,7 @@ const homePreviewCard = {
             name: 'project',
             title: 'Progetto',
             type: 'reference',
-            to: [{ type: 'work' }],
+            to: [{ type: 'project' }],
             validation: (Rule: ValidationRule) => Rule.required(),
             description: 'Progetto di destinazione (Works o Series).',
         },
@@ -22,15 +41,25 @@ const homePreviewCard = {
             title: 'Immagine Card',
             type: 'image',
             options: { hotspot: true },
-            description: 'Foto specifica per questa card. Se vuota, usa la mainImage del progetto.',
+            validation: (Rule: ValidationRule) => Rule.required(),
+            description: 'Foto specifica per questa card nella mixed preview home.',
         },
         {
             name: 'previewLayout',
             title: 'Layout Home',
             type: 'object',
             options: { collapsible: true, collapsed: true },
+            components: { input: PreviewLayoutInput },
             fields: [
-                { name: 'preset', title: 'Preset posizione', type: 'string' },
+                {
+                    name: 'preset',
+                    title: 'Preset posizione',
+                    type: 'string',
+                    initialValue: 'auto',
+                    options: {
+                        list: PRESET_POSITION_OPTIONS,
+                    },
+                },
                 {
                     name: 'x',
                     title: 'X (%)',
@@ -89,7 +118,7 @@ const homePreviewCard = {
             subtitle: 'project.kind',
             media: 'image',
         },
-        prepare(selection: { title?: string; subtitle?: string; media?: unknown }) {
+        prepare(selection: { title?: string; subtitle?: string; media?: ReactNode }) {
             return {
                 title: selection.title ?? 'Card senza progetto',
                 subtitle: selection.subtitle ?? 'home preview card',

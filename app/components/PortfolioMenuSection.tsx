@@ -2,23 +2,23 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import type { WorkWithUrl } from './work-types'
+import type { ProjectWithUrl } from './project-types'
 
 interface PortfolioMenuSectionProps {
-  works: WorkWithUrl[]
+  projects: ProjectWithUrl[]
   sectionId: string
   headingText: string
   introText: string
   emptyText: string
 }
 
-function getWorkHref(work: WorkWithUrl) {
-  const isSeries = work.kind === 'series'
-  return isSeries ? `/series/${work.slug.current}` : `/works/${work.slug.current}`
+function getProjectHref(project: ProjectWithUrl) {
+  const isSeries = project.kind === 'series'
+  return isSeries ? `/series/${project.slug.current}` : `/works/${project.slug.current}`
 }
 
 export default function PortfolioMenuSection({
-  works,
+  projects,
   sectionId,
   headingText,
   introText,
@@ -80,7 +80,7 @@ export default function PortfolioMenuSection({
         </p>
       </header>
 
-      {works.length === 0 ? (
+      {projects.length === 0 ? (
         <p
           style={{
             margin: 0,
@@ -93,10 +93,10 @@ export default function PortfolioMenuSection({
         </p>
       ) : (
         <div style={{ borderTop: '1px solid rgba(26,24,20,0.16)' }}>
-          {works.map((work, index) => (
+          {projects.map((project, index) => (
             <Link
-              key={work._id}
-              href={getWorkHref(work)}
+              key={project._id}
+              href={getProjectHref(project)}
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(120px, 190px) 1fr',
@@ -118,10 +118,10 @@ export default function PortfolioMenuSection({
                   background: 'rgba(26,24,20,0.08)',
                 }}
               >
-                {work.imageUrl && (
+                {project.imageUrl && (
                   <Image
-                    src={work.imageUrl}
-                    alt={work.title || 'Project image'}
+                    src={project.imageUrl}
+                    alt={project.title || 'Project image'}
                     fill
                     sizes="(min-width: 1024px) 190px, 36vw"
                     style={{
@@ -143,7 +143,7 @@ export default function PortfolioMenuSection({
                     color: 'rgba(26,24,20,0.54)',
                   }}
                 >
-                  {String(index + 1).padStart(2, '0')} / {work.year}
+                  {String(index + 1).padStart(2, '0')} / {project.year}
                 </p>
                 <h2
                   style={{
@@ -156,7 +156,7 @@ export default function PortfolioMenuSection({
                     color: 'var(--ink)',
                   }}
                 >
-                  {work.title}
+                  {project.title}
                 </h2>
                 <p
                   style={{
@@ -167,7 +167,7 @@ export default function PortfolioMenuSection({
                     color: 'rgba(26,24,20,0.72)',
                   }}
                 >
-                  {work.description?.trim() || 'Open project details and full photo story.'}
+                  {project.description?.trim() || 'Open project details and full photo story.'}
                 </p>
                 <p
                   style={{
@@ -178,7 +178,7 @@ export default function PortfolioMenuSection({
                     color: 'rgba(26,24,20,0.6)',
                   }}
                 >
-                  {work.kind === 'series' ? 'Series' : 'Works'} {'\u2192'}
+                  {project.kind === 'series' ? 'Series' : 'Works'} {'\u2192'}
                 </p>
               </div>
             </Link>

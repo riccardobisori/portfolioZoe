@@ -1,5 +1,5 @@
 import { urlFor } from '@/sanity/lib/image'
-import type { HomePreviewCardDocument, SanityWork, WorkWithUrl } from './work-types'
+import type { HomePreviewCardDocument, SanityProject, ProjectWithUrl } from './project-types'
 
 function isLandscapeFromRef(imageRef?: string) {
     if (!imageRef) return false
@@ -10,25 +10,25 @@ function isLandscapeFromRef(imageRef?: string) {
     return originalWidth > originalHeight
 }
 
-// Trasforma i lavori "grezzi" in dati pronti per la UI:
+// Trasforma i progetti "grezzi" in dati pronti per la UI:
 // 1) URL immagine ottimizzato
 // 2) flag orizzontale/verticale letto dal ref Sanity.
-export function enrichWorksWithMedia(works: SanityWork[]): WorkWithUrl[] {
-    return works.map((work) => {
-        const isLandscape = isLandscapeFromRef(work.mainImage?.asset?._ref)
+export function enrichProjectsWithMedia(projects: SanityProject[]): ProjectWithUrl[] {
+    return projects.map((project) => {
+        const isLandscape = isLandscapeFromRef(project.mainImage?.asset?._ref)
 
         return {
-            ...work,
-            imageUrl: work.mainImage ? urlFor(work.mainImage).width(1400).url() : null,
+            ...project,
+            imageUrl: project.mainImage ? urlFor(project.mainImage).width(1400).url() : null,
             isLandscape,
         }
     })
 }
 
 // Trasforma i documenti homePreviewCard in card renderizzabili.
-// Ogni card punta a un progetto (work) e puo usare un'immagine specifica.
-export function mapHomePreviewCardsToWorks(cards: HomePreviewCardDocument[]): WorkWithUrl[] {
-    const expanded: WorkWithUrl[] = []
+// Ogni card punta a un progetto e puo usare un'immagine specifica.
+export function mapHomePreviewCardsToProjects(cards: HomePreviewCardDocument[]): ProjectWithUrl[] {
+    const expanded: ProjectWithUrl[] = []
 
     cards.forEach((card) => {
         const project = card.project
@@ -39,7 +39,7 @@ export function mapHomePreviewCardsToWorks(cards: HomePreviewCardDocument[]): Wo
             ...project,
             _id: card._id,
             mainImage: image,
-            previewLayout: card.previewLayout ?? project.previewLayout ?? null,
+            previewLayout: card.previewLayout ?? null,
             imageUrl: image ? urlFor(image).width(1400).url() : null,
             isLandscape: isLandscapeFromRef(image?.asset?._ref),
         })
@@ -48,22 +48,22 @@ export function mapHomePreviewCardsToWorks(cards: HomePreviewCardDocument[]): Wo
     return expanded
 }
 
-// Mischia i lavori per una griglia più bilanciata:
+// Mischia i progetti per una griglia più bilanciata:
 // pattern base = 2 verticali, poi 1 orizzontale.
-export function mixWorksForMasonry(works: WorkWithUrl[]): WorkWithUrl[] {
-    const portraits = works.filter((work) => !work.isLandscape)
-    const landscapes = works.filter((work) => work.isLandscape)
-    const mixedWorks: WorkWithUrl[] = []
+export function mixProjectsForMasonry(projects: ProjectWithUrl[]): ProjectWithUrl[] {
+    const portraits = projects.filter((project) => !project.isLandscape)
+    const landscapes = projects.filter((project) => project.isLandscape)
+    const mixedProjects: ProjectWithUrl[] = []
 
     while (portraits.length > 0 || landscapes.length > 0) {
         const firstPortrait = portraits.shift()
         const secondPortrait = portraits.shift()
         const firstLandscape = landscapes.shift()
 
-        if (firstPortrait) mixedWorks.push(firstPortrait)
-        if (secondPortrait) mixedWorks.push(secondPortrait)
-        if (firstLandscape) mixedWorks.push(firstLandscape)
+        if (firstPortrait) mixedProjects.push(firstPortrait)
+        if (secondPortrait) mixedProjects.push(secondPortrait)
+        if (firstLandscape) mixedProjects.push(firstLandscape)
     }
 
-    return mixedWorks
+    return mixedProjects
 }

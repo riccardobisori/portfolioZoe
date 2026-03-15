@@ -1,6 +1,6 @@
 // Tipo "grezzo" così come arriva da Sanity.
 // Qui teniamo solo i campi che usiamo nel frontend.
-export interface WorkPreviewLayoutValues {
+export interface ProjectPreviewLayoutValues {
     // Slot "guidato" scelto da editor CMS (es. leftTop, centerBottom, ecc.).
     preset?: string | null
     // Override manuali opzionali (percentuali): se presenti, prevalgono sul preset.
@@ -13,27 +13,27 @@ export interface WorkPreviewLayoutValues {
     preferred?: 'landscape' | 'portrait' | 'any' | null
 }
 
-export interface WorkPreviewLayout extends WorkPreviewLayoutValues {
+export interface ProjectPreviewLayout extends ProjectPreviewLayoutValues {
     // Override opzionali per breakpoint desktop.
     responsive?: {
-        desktop1024?: WorkPreviewLayoutValues | null
-        desktop1440?: WorkPreviewLayoutValues | null
-        desktop1920?: WorkPreviewLayoutValues | null
+        desktop1024?: ProjectPreviewLayoutValues | null
+        desktop1440?: ProjectPreviewLayoutValues | null
+        desktop1920?: ProjectPreviewLayoutValues | null
     } | null
 }
 
 export interface HomePreviewCardDocument {
     _id: string
-    project?: SanityWork | null
+    project?: SanityProject | null
     image?: {
         asset?: {
             _ref?: string
         }
     } | null
-    previewLayout?: WorkPreviewLayout | null
+    previewLayout?: ProjectPreviewLayout | null
 }
 
-export interface SanityWork {
+export interface SanityProject {
     _id: string
     title: string
     slug: { current: string }
@@ -45,13 +45,13 @@ export interface SanityWork {
             _ref?: string
         }
     } | null
-    // Layout opzionale usato solo nella preview moodboard home.
-    previewLayout?: WorkPreviewLayout | null
 }
 
 // Tipo arricchito lato app: aggiungiamo URL immagine pronta
 // e orientamento utile per la composizione masonry.
-export interface WorkWithUrl extends SanityWork {
+export interface ProjectWithUrl extends SanityProject {
     imageUrl: string | null
     isLandscape?: boolean
+    // Layout opzionale usato solo dalle homePreviewCard.
+    previewLayout?: ProjectPreviewLayout | null
 }

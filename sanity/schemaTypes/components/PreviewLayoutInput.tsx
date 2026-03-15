@@ -7,7 +7,16 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
-import { PatchEvent, set, setIfMissing, unset, type ObjectInputProps, useClient, useFormValue } from 'sanity'
+import {
+  PatchEvent,
+  set,
+  setIfMissing,
+  unset,
+  type FormPatch,
+  type ObjectInputProps,
+  useClient,
+  useFormValue,
+} from 'sanity'
 import { Box, Button, Card, Flex, Stack, Text } from '@sanity/ui'
 import { urlFor } from '../../lib/image'
 
@@ -81,9 +90,10 @@ type ImageAssetRef = {
 
 type DocumentWithImage = {
   _id?: string
-  title?: string
-  featured?: boolean
-  mainImage?: ImageAssetRef
+  image?: ImageAssetRef
+  project?: {
+    _ref?: string
+  }
   previewLayout?: PreviewLayoutRaw
 }
 
@@ -99,10 +109,15 @@ type PreviewLayoutRaw = {
   responsive?: Partial<Record<DesktopBreakpointKey, Omit<PreviewLayoutRaw, 'responsive'>>>
 }
 
-type FeaturedWorkPreview = {
+type HomePreviewCardPreview = {
   _id: string
   title?: string
-  mainImage?: ImageAssetRef
+  image?: ImageAssetRef
+  project?: {
+    _id?: string
+    title?: string
+    mainImage?: ImageAssetRef
+  }
   previewLayout?: PreviewLayoutRaw
 }
 
@@ -239,25 +254,6 @@ function isManualLayout(layout?: PreviewLayoutRaw, breakpoint?: DesktopBreakpoin
   )
 }
 
-function getLayoutPathPrefix(breakpoint: DesktopBreakpointKey) {
-  return ['responsive', breakpoint] as const
-}
-
-function readFieldFromScopedLayout(
-  layout: PreviewLayoutRaw | undefined,
-  breakpoint: DesktopBreakpointKey
-) {
-  const scoped = resolveLayoutForBreakpoint(layout, breakpoint)
-  return {
-    preset: scoped?.preset,
-    x: scoped?.x,
-    y: scoped?.y,
-    width: scoped?.width,
-    z: scoped?.z,
-    preferred: scoped?.preferred,
-  }
-}
-
 function getMoodboardBaseOffset(preferred: Preferred, row: number, leftPercent: number) {
   const evenRow = row % 2 === 0
   const landscape = preferred === 'landscape'
@@ -303,7 +299,6 @@ const VIEWPORT_PRESETS = [
 export default function PreviewLayoutInput(props: ObjectInputProps) {
   const client = useClient({ apiVersion: '2026-03-07' })
   const lastPresetRef = useRef<string | undefined>(undefined)
-  const lastBreakpointRef = useRef<DesktopBreakpointKey | undefined>(undefined)
   const hasInitializedRef = useRef(false)
   const dragStateRef = useRef<DragState | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -318,21 +313,31 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null)
   const activeBreakpoint = useMemo(() => getBreakpointForViewport(viewportWidth), [viewportWidth])
   const scopedFormLayout = useMemo(
-    () => readFieldFromScopedLayout(props.value as PreviewLayoutRaw | undefined, activeBreakpoint),
-    [activeBreakpoint, props.value]
+    () => {
+      const base = props.value as PreviewLayoutRaw | undefined
+      return {
+        preset: base?.preset,
+        x: base?.x,
+        y: base?.y,
+        width: base?.width,
+        z: base?.z,
+        preferred: base?.preferred,
+      }
+    },
+    [props.value]
   )
   const preset = typeof scopedFormLayout.preset === 'string' ? (scopedFormLayout.preset as PresetKey) : 'auto'
   const documentValue = useFormValue([]) as DocumentWithImage | undefined
   const currentDocumentId = documentValue?._id ?? ''
-  const mainImage = documentValue?.mainImage
+  const image = documentValue?.image
   const previewImageUrl = useMemo(() => {
-    if (!mainImage) return null
+    if (!image) return null
     try {
-      return urlFor(mainImage).width(1400).quality(90).url()
+      return urlFor(image).width(1400).quality(90).url()
     } catch {
       return null
     }
-  }, [mainImage])
+  }, [image])
   const activeLayout = useMemo<LayoutValues>(() => {
     const presetBase =
       preset !== 'auto' ? PRESET_VALUES[preset as Exclude<PresetKey, 'auto'>] : DEFAULT_LAYOUT
@@ -352,9 +357,9 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     }
   }, [preset, scopedFormLayout])
   const activeImageAspectRatio = useMemo(() => {
-    const byImageRef = getImageAspectRatioFromRef(mainImage?.asset?._ref)
+    const byImageRef = getImageAspectRatioFromRef(image?.asset?._ref)
     return byImageRef ?? getPreviewAspectRatio(activeLayout.preferred)
-  }, [activeLayout.preferred, mainImage?.asset?._ref])
+  }, [activeLayout.preferred, image?.asset?._ref])
 
   useEffect(() => {
     let cancelled = false
@@ -362,8 +367,9 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     const normalizeId = (value: string) => value.replace(/^drafts\./, '')
     const currentBaseId = normalizeId(currentDocumentId)
 
-    const resolveLayout = (work: FeaturedWorkPreview, index: number) => {
-      const raw = resolveLayoutForBreakpoint(work.previewLayout, activeBreakpoint)
+    const resolveLayout = (card: HomePreviewCardPreview, index: number) => {
+      const rawBase = card.previewLayout
+      const raw = resolveLayoutForBreakpoint(rawBase, activeBreakpoint)
       const presetKey =
         raw?.preset && raw.preset !== 'auto' && PRESET_VALUES[raw.preset]
           ? raw.preset
@@ -385,16 +391,18 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
       }
     }
 
-    const isLandscape = (work: FeaturedWorkPreview) => {
-      const dims = parseImageDimensionsFromRef(work.mainImage?.asset?._ref)
+    const getCardImage = (card: HomePreviewCardPreview) => card.image ?? card.project?.mainImage
+
+    const isLandscape = (card: HomePreviewCardPreview) => {
+      const dims = parseImageDimensionsFromRef(getCardImage(card)?.asset?._ref)
       if (!dims) return false
       return dims.width >= dims.height
     }
 
-    const arrangeForMoodboard = (works: FeaturedWorkPreview[]) => {
-      const portraits = works.filter((work) => !isLandscape(work))
-      const landscapes = works.filter((work) => isLandscape(work))
-      const arranged: FeaturedWorkPreview[] = []
+    const arrangeForMoodboard = (cards: HomePreviewCardPreview[]) => {
+      const portraits = cards.filter((card) => !isLandscape(card))
+      const landscapes = cards.filter((card) => isLandscape(card))
+      const arranged: HomePreviewCardPreview[] = []
 
       const pullLandscape = () => landscapes.shift() ?? portraits.shift()
       const pullPortrait = () => portraits.shift() ?? landscapes.shift()
@@ -403,9 +411,9 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
         portraits.shift() ??
         landscapes.shift()
 
-      for (let index = 0; index < works.length; index += 1) {
+      for (let index = 0; index < cards.length; index += 1) {
         const slot = MOODBOARD_SLOTS[index % MOODBOARD_SLOTS.length]
-        let selected: FeaturedWorkPreview | undefined
+        let selected: HomePreviewCardPreview | undefined
         if (slot.preferred === 'landscape') selected = pullLandscape()
         else if (slot.preferred === 'portrait') selected = pullPortrait()
         else selected = pullAny()
@@ -416,47 +424,51 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     }
 
     const loadReferenceCards = async () => {
-      const fetchedWorks = await client.fetch<FeaturedWorkPreview[]>(
-        `*[_type == "work" && featured == true] | order(date desc) {
+      const fetchedCards = await client.fetch<HomePreviewCardPreview[]>(
+        `*[_type == "homePreviewCard" && coalesce(enabled, true) == true] | order(order asc, _createdAt asc) {
           _id,
-          title,
-          mainImage,
-          previewLayout
+          image,
+          previewLayout,
+          project->{
+            _id,
+            title,
+            mainImage
+          }
         }`
       )
 
-      const works = fetchedWorks.map((work) => {
-        if (normalizeId(work._id) !== currentBaseId) return work
+      const cards = fetchedCards.map((card) => {
+        if (normalizeId(card._id) !== currentBaseId) return card
         return {
-          ...work,
-          title: documentValue?.title ?? work.title,
-          mainImage: documentValue?.mainImage ?? work.mainImage,
-          previewLayout: documentValue?.previewLayout ?? work.previewLayout,
+          ...card,
+          image: documentValue?.image ?? card.image,
+          previewLayout: documentValue?.previewLayout ?? card.previewLayout,
         }
       })
 
-      const shouldUseManual = works.some((work) => isManualLayout(work.previewLayout, activeBreakpoint))
-      const arrangedWorks = shouldUseManual ? works : arrangeForMoodboard(works)
-      const rows = Math.ceil(Math.max(arrangedWorks.length, 1) / MOODBOARD_SLOTS.length)
+      const shouldUseManual = cards.some((card) => isManualLayout(card.previewLayout, activeBreakpoint))
+      const arrangedCards = shouldUseManual ? cards : arrangeForMoodboard(cards)
+      const rows = Math.ceil(Math.max(arrangedCards.length, 1) / MOODBOARD_SLOTS.length)
       const desktopHeight = MOODBOARD_BASE_HEIGHT + Math.max(rows - 1, 0) * MOODBOARD_ROW_HEIGHT
 
-      const cardsWithCurrent = arrangedWorks.map((item, idx) => {
+      const cardsWithCurrent = arrangedCards.map((item, idx) => {
           const layout = resolveLayout(item, idx)
           const slot = MOODBOARD_SLOTS[idx % MOODBOARD_SLOTS.length]
           const row = Math.floor(idx / MOODBOARD_SLOTS.length)
           const manual = isManualLayout(item.previewLayout, activeBreakpoint)
           const baseOffset = manual ? { offsetX: 0, offsetY: 0 } : getMoodboardBaseOffset(layout.preferred, row, slot.left)
+          const cardImage = getCardImage(item)
           let imageUrl: string | null = null
-          if (item.mainImage) {
+          if (cardImage) {
             try {
-              imageUrl = urlFor(item.mainImage).width(900).quality(75).url()
+              imageUrl = urlFor(cardImage).width(900).quality(75).url()
             } catch {
               imageUrl = null
             }
           }
           return {
             _id: item._id,
-            title: item.title ?? 'Work',
+            title: item.project?.title ?? 'Card',
             imageUrl,
             x: layout.x,
             y: layout.y,
@@ -464,7 +476,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
             z: manual ? layout.z : slot.z + row * 8,
             preferred: layout.preferred,
             aspectRatio:
-              getImageAspectRatioFromRef(item.mainImage?.asset?._ref) ?? getPreviewAspectRatio(layout.preferred),
+              getImageAspectRatioFromRef(cardImage?.asset?._ref) ?? getPreviewAspectRatio(layout.preferred),
             topPx: manual ? undefined : (slot.top / 100) * desktopHeight + row * 490,
             offsetX: baseOffset.offsetX,
             offsetY: baseOffset.offsetY,
@@ -473,11 +485,11 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
           }
         })
       const currentCard = cardsWithCurrent.find((card) => normalizeId(card._id) === currentBaseId)
-      const cards = cardsWithCurrent.filter((card) => normalizeId(card._id) !== currentBaseId)
+      const referenceCardsOnly = cardsWithCurrent.filter((card) => normalizeId(card._id) !== currentBaseId)
 
       if (!cancelled) {
         setLogicalCanvasHeight(desktopHeight)
-        setReferenceCards(cards)
+        setReferenceCards(referenceCardsOnly)
         setActiveAutoPlacement(
           currentCard
             ? {
@@ -505,7 +517,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     return () => {
       cancelled = true
     }
-  }, [activeBreakpoint, client, currentDocumentId, documentValue?.mainImage, documentValue?.previewLayout, documentValue?.title])
+  }, [activeBreakpoint, client, currentDocumentId, documentValue?.image, documentValue?.previewLayout, documentValue?.project?._ref])
 
   const BASE_CANVAS_WIDTH = viewportWidth
   const BASE_CANVAS_HEIGHT = Math.round(logicalCanvasHeight * canvasHeightScale)
@@ -528,7 +540,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
   }, [BASE_CANVAS_HEIGHT, BASE_CANVAS_WIDTH, fitToViewport, viewportWidth])
 
   const currentLayout = useMemo<LayoutValues>(() => {
-    if (!isManualLayout(props.value as PreviewLayoutRaw | undefined, activeBreakpoint) && activeAutoPlacement) {
+    if (!isManualLayout(props.value as PreviewLayoutRaw | undefined) && activeAutoPlacement) {
       return {
         x: activeAutoPlacement.x,
         y: activeAutoPlacement.y,
@@ -541,7 +553,7 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
   }, [activeAutoPlacement, activeBreakpoint, activeLayout, props.value])
 
   const activeCardStyle = useMemo(() => {
-    if (!isManualLayout(props.value as PreviewLayoutRaw | undefined, activeBreakpoint) && activeAutoPlacement) {
+    if (!isManualLayout(props.value as PreviewLayoutRaw | undefined) && activeAutoPlacement) {
       return {
         top:
           typeof activeAutoPlacement.topPx === 'number'
@@ -562,20 +574,16 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
 
   const applyLayoutPatch = useCallback(
     (nextValues: Partial<LayoutValues>) => {
-      const pathPrefix = getLayoutPathPrefix(activeBreakpoint)
-      const patches: any[] = [setIfMissing({}, ['responsive']), setIfMissing({}, [...pathPrefix])]
-      if (typeof nextValues.x === 'number')
-        patches.push(set(snap(clamp(nextValues.x, 0, 90)), [...pathPrefix, 'x']))
-      if (typeof nextValues.y === 'number')
-        patches.push(set(snap(clamp(nextValues.y, 0, 95)), [...pathPrefix, 'y']))
+      const patches: FormPatch[] = [setIfMissing({}, [])]
+      if (typeof nextValues.x === 'number') patches.push(set(snap(clamp(nextValues.x, 0, 90)), ['x']))
+      if (typeof nextValues.y === 'number') patches.push(set(snap(clamp(nextValues.y, 0, 95)), ['y']))
       if (typeof nextValues.width === 'number')
-        patches.push(set(snap(clamp(nextValues.width, 10, 45)), [...pathPrefix, 'width']))
-      if (typeof nextValues.z === 'number')
-        patches.push(set(snap(clamp(nextValues.z, 1, 10)), [...pathPrefix, 'z']))
-      if (nextValues.preferred) patches.push(set(nextValues.preferred, [...pathPrefix, 'preferred']))
+        patches.push(set(snap(clamp(nextValues.width, 10, 45)), ['width']))
+      if (typeof nextValues.z === 'number') patches.push(set(snap(clamp(nextValues.z, 1, 10)), ['z']))
+      if (nextValues.preferred) patches.push(set(nextValues.preferred, ['preferred']))
       if (patches.length > 0) props.onChange(PatchEvent.from(patches))
     },
-    [activeBreakpoint, props]
+    [props]
   )
 
   useEffect(() => {
@@ -583,13 +591,6 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     // Così non sovrascriviamo eventuali override manuali già salvati.
     if (!hasInitializedRef.current) {
       hasInitializedRef.current = true
-      lastPresetRef.current = preset
-      lastBreakpointRef.current = activeBreakpoint
-      return
-    }
-
-    if (lastBreakpointRef.current !== activeBreakpoint) {
-      lastBreakpointRef.current = activeBreakpoint
       lastPresetRef.current = preset
       return
     }
@@ -601,20 +602,18 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     if (preset === 'auto') return
     const values = PRESET_VALUES[preset]
     if (!values) return
-    const pathPrefix = getLayoutPathPrefix(activeBreakpoint)
 
     props.onChange(
       PatchEvent.from([
-        setIfMissing({}, ['responsive']),
-        setIfMissing({}, [...pathPrefix]),
-        set(values.x, [...pathPrefix, 'x']),
-        set(values.y, [...pathPrefix, 'y']),
-        set(values.width, [...pathPrefix, 'width']),
-        set(values.z, [...pathPrefix, 'z']),
-        set(values.preferred, [...pathPrefix, 'preferred']),
+        setIfMissing({}, []),
+        set(values.x, ['x']),
+        set(values.y, ['y']),
+        set(values.width, ['width']),
+        set(values.z, ['z']),
+        set(values.preferred, ['preferred']),
       ])
     )
-  }, [activeBreakpoint, preset, props])
+  }, [preset, props])
 
   useEffect(() => {
     if (!isDragging) return
@@ -676,33 +675,30 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     if (preset === 'auto') return
     const values = PRESET_VALUES[preset]
     if (!values) return
-    const pathPrefix = getLayoutPathPrefix(activeBreakpoint)
     props.onChange(
       PatchEvent.from([
-        setIfMissing({}, ['responsive']),
-        setIfMissing({}, [...pathPrefix]),
-        set(values.x, [...pathPrefix, 'x']),
-        set(values.y, [...pathPrefix, 'y']),
-        set(values.width, [...pathPrefix, 'width']),
-        set(values.z, [...pathPrefix, 'z']),
-        set(values.preferred, [...pathPrefix, 'preferred']),
+        setIfMissing({}, []),
+        set(values.x, ['x']),
+        set(values.y, ['y']),
+        set(values.width, ['width']),
+        set(values.z, ['z']),
+        set(values.preferred, ['preferred']),
       ])
     )
-  }, [activeBreakpoint, preset, props])
+  }, [preset, props])
 
   const clearManualOverrides = useCallback(() => {
-    const pathPrefix = getLayoutPathPrefix(activeBreakpoint)
     props.onChange(
       PatchEvent.from([
-        unset([...pathPrefix, 'x']),
-        unset([...pathPrefix, 'y']),
-        unset([...pathPrefix, 'width']),
-        unset([...pathPrefix, 'z']),
-        unset([...pathPrefix, 'preferred']),
-        unset([...pathPrefix, 'preset']),
+        unset(['x']),
+        unset(['y']),
+        unset(['width']),
+        unset(['z']),
+        unset(['preferred']),
+        unset(['preset']),
       ])
     )
-  }, [activeBreakpoint, props])
+  }, [props])
 
   const handleCanvasKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {

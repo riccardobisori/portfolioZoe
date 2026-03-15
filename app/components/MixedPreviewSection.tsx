@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import type { WorkWithUrl } from './work-types'
+import type { ProjectWithUrl } from './project-types'
 
 interface MixedPreviewSectionProps {
-    works: WorkWithUrl[]
+    projects: ProjectWithUrl[]
     sectionId?: string
     headingText?: string
 }
@@ -86,18 +86,18 @@ function parseImageDimensionsFromRef(imageRef?: string) {
     return { width, height }
 }
 
-function getCardAspectRatio(work: WorkWithUrl, preferred: MoodboardSlot['preferred']) {
-    const fromImage = parseImageDimensionsFromRef(work.mainImage?.asset?._ref)
+function getCardAspectRatio(project: ProjectWithUrl, preferred: MoodboardSlot['preferred']) {
+    const fromImage = parseImageDimensionsFromRef(project.mainImage?.asset?._ref)
     if (fromImage) return `${fromImage.width} / ${fromImage.height}`
     return preferred === 'portrait' ? '2 / 3' : '3 / 2'
 }
 
-function getWorkHref(work: WorkWithUrl) {
-    const isSeries = work.kind === 'series'
-    return isSeries ? `/series/${work.slug.current}` : `/works/${work.slug.current}`
+function getProjectHref(project: ProjectWithUrl) {
+    const isSeries = project.kind === 'series'
+    return isSeries ? `/series/${project.slug.current}` : `/works/${project.slug.current}`
 }
 
-function resolveLayoutForBreakpoint(layout: WorkWithUrl['previewLayout'], breakpoint: DesktopBreakpointKey) {
+function resolveLayoutForBreakpoint(layout: ProjectWithUrl['previewLayout'], breakpoint: DesktopBreakpointKey) {
     if (!layout) return null
     const override = layout.responsive?.[breakpoint]
     if (!override) return layout
@@ -112,8 +112,8 @@ function resolveLayoutForBreakpoint(layout: WorkWithUrl['previewLayout'], breakp
     }
 }
 
-function hasManualLayoutForBreakpoint(work: WorkWithUrl, breakpoint: DesktopBreakpointKey) {
-    const layout = resolveLayoutForBreakpoint(work.previewLayout, breakpoint)
+function hasManualLayoutForBreakpoint(project: ProjectWithUrl, breakpoint: DesktopBreakpointKey) {
+    const layout = resolveLayoutForBreakpoint(project.previewLayout, breakpoint)
     if (!layout) return false
     return (
         (layout.preset != null && layout.preset !== 'auto') ||
@@ -124,12 +124,12 @@ function hasManualLayoutForBreakpoint(work: WorkWithUrl, breakpoint: DesktopBrea
     )
 }
 
-function resolveSlotFromBackend(work: WorkWithUrl, fallbackSlot: MoodboardSlot, breakpoint: DesktopBreakpointKey): MoodboardSlot {
+function resolveSlotFromBackend(project: ProjectWithUrl, fallbackSlot: MoodboardSlot, breakpoint: DesktopBreakpointKey): MoodboardSlot {
     // Pipeline:
     // 1) se c'è preset CMS, usiamo quello come base;
     // 2) applichiamo eventuali override x/y/width/z;
     // 3) se manca tutto, restiamo sul fallback automatico.
-    const layout = resolveLayoutForBreakpoint(work.previewLayout, breakpoint)
+    const layout = resolveLayoutForBreakpoint(project.previewLayout, breakpoint)
     if (!layout) return fallbackSlot
 
     const presetKey = layout.preset as MoodboardPresetKey | null | undefined
@@ -153,11 +153,11 @@ function resolveSlotFromBackend(work: WorkWithUrl, fallbackSlot: MoodboardSlot, 
     }
 }
 
-function arrangeWorksForMoodboard(works: WorkWithUrl[]) {
-    // Separiamo i lavori per orientamento per abbinarli meglio agli slot.
-    const portraits = works.filter((work) => !work.isLandscape)
-    const landscapes = works.filter((work) => work.isLandscape)
-    const arranged: WorkWithUrl[] = []
+function arrangeProjectsForMoodboard(projects: ProjectWithUrl[]) {
+    // Separiamo i progetti per orientamento per abbinarli meglio agli slot.
+    const portraits = projects.filter((project) => !project.isLandscape)
+    const landscapes = projects.filter((project) => project.isLandscape)
+    const arranged: ProjectWithUrl[] = []
 
     const pullLandscape = () => landscapes.shift() ?? portraits.shift()
     const pullPortrait = () => portraits.shift() ?? landscapes.shift()
@@ -166,9 +166,9 @@ function arrangeWorksForMoodboard(works: WorkWithUrl[]) {
         portraits.shift() ??
         landscapes.shift()
 
-    for (let index = 0; index < works.length; index += 1) {
+    for (let index = 0; index < projects.length; index += 1) {
         const slot = MOODBOARD_SLOTS[index % MOODBOARD_SLOTS.length]
-        let selected: WorkWithUrl | undefined
+        let selected: ProjectWithUrl | undefined
 
         if (slot.preferred === 'landscape') {
             selected = pullLandscape()
@@ -187,22 +187,22 @@ function arrangeWorksForMoodboard(works: WorkWithUrl[]) {
 }
 
 function MoodboardCard({
-    work,
+    project,
     slot,
     row,
     breakpoint,
     hoveredId,
     setHoveredId,
 }: {
-    work: WorkWithUrl
+    project: ProjectWithUrl
     slot: MoodboardSlot
     row: number
     breakpoint: DesktopBreakpointKey
     hoveredId: string | null
     setHoveredId: (id: string | null) => void
 }) {
-    const hasManualPosition = hasManualLayoutForBreakpoint(work, breakpoint)
-    const isHovered = hoveredId === work._id
+    const hasManualPosition = hasManualLayoutForBreakpoint(project, breakpoint)
+    const isHovered = hoveredId === project._id
     const isRightEdgeSlot = !hasManualPosition && parseFloat(slot.left) >= 70
     const top = hasManualPosition ? slot.top : `calc(${slot.top} + ${row * 490}px)`
     const evenRow = row % 2 === 0
@@ -216,14 +216,14 @@ function MoodboardCard({
         : slot.preferred === 'landscape'
             ? (evenRow ? -2 : 4)
             : (evenRow ? -1 : 3)
-    const aspectRatio = getCardAspectRatio(work, slot.preferred)
+    const aspectRatio = getCardAspectRatio(project, slot.preferred)
 
     return (
         <Link
-            href={getWorkHref(work)}
-            onMouseEnter={() => setHoveredId(work._id)}
+            href={getProjectHref(project)}
+            onMouseEnter={() => setHoveredId(project._id)}
             onMouseLeave={() => setHoveredId(null)}
-            onFocus={() => setHoveredId(work._id)}
+            onFocus={() => setHoveredId(project._id)}
             onBlur={() => setHoveredId(null)}
             style={{
                 position: 'absolute',
@@ -234,7 +234,7 @@ function MoodboardCard({
                 color: 'inherit',
                 zIndex: isHovered ? 120 : hasManualPosition ? slot.z : slot.z + row * 8,
                 // Hover "soft": piccolo lift + scale moderata, senza spostamenti al centro.
-                transform: `translate(${baseOffsetX + (isRightEdgeSlot ? -8 : 0)}px, ${baseOffsetY + (isHovered ? -6 : 0)}px) scale(${isHovered ? 1.14 : 1})`,
+                transform: `translate(${baseOffsetX + (isRightEdgeSlot ? -8 : 0)}px, ${baseOffsetY + (isHovered ? -2 : 0)}px) scale(${isHovered ? 1.03 : 1})`,
                 transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1), z-index 0ms linear 120ms',
                 willChange: 'transform',
                 transformOrigin: 'center center',
@@ -248,10 +248,10 @@ function MoodboardCard({
                     aspectRatio,
                 }}
             >
-                {work.imageUrl && (
+                {project.imageUrl && (
                     <img
-                        src={work.imageUrl}
-                        alt={work.title}
+                        src={project.imageUrl}
+                        alt={project.title}
                         style={{
                             width: '100%',
                             height: '100%',
@@ -262,7 +262,7 @@ function MoodboardCard({
                             boxShadow: isHovered
                                 ? '0 36px 72px rgba(26, 24, 20, 0.34)'
                                 : '0 10px 24px rgba(26, 24, 20, 0.14)',
-                            transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+                            transform: isHovered ? 'scale(1.01)' : 'scale(1)',
                             transition: 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 420ms ease',
                         }}
                     />
@@ -292,7 +292,7 @@ function MoodboardCard({
                             textAlign: 'center',
                         }}
                     >
-                        {work.title}
+                        {project.title}
                     </span>
                     <span
                         style={{
@@ -304,7 +304,7 @@ function MoodboardCard({
                             textAlign: 'center',
                         }}
                     >
-                        {work.year}
+                        {project.year}
                     </span>
                 </div>
             </div>
@@ -314,7 +314,7 @@ function MoodboardCard({
 }
 
 export default function MixedPreviewSection({
-    works,
+    projects,
     sectionId = 'preview',
 }: MixedPreviewSectionProps) {
     const [isDesktop, setIsDesktop] = useState(false)
@@ -326,13 +326,13 @@ export default function MixedPreviewSection({
     const ctaLinkWidth = 'clamp(11.5rem, 18vw, 13.5rem)'
     // Se almeno un elemento ha layout manuale, non riordiniamo con l'algoritmo automatico.
     const shouldUseManualLayout = useMemo(
-        () => works.some((work) => hasManualLayoutForBreakpoint(work, desktopBreakpoint)),
-        [desktopBreakpoint, works]
+        () => projects.some((project) => hasManualLayoutForBreakpoint(project, desktopBreakpoint)),
+        [desktopBreakpoint, projects]
     )
     // Applichiamo l'ordine "misto" una sola volta per render, non ad ogni paint.
-    const arrangedWorks = useMemo(
-        () => (shouldUseManualLayout ? works : arrangeWorksForMoodboard(works)),
-        [works, shouldUseManualLayout]
+    const arrangedProjects = useMemo(
+        () => (shouldUseManualLayout ? projects : arrangeProjectsForMoodboard(projects)),
+        [projects, shouldUseManualLayout]
     )
 
     useEffect(() => {
@@ -349,13 +349,13 @@ export default function MixedPreviewSection({
         return () => window.removeEventListener('resize', update)
     }, [])
 
-    const rows = Math.ceil(arrangedWorks.length / MOODBOARD_SLOTS.length)
+    const rows = Math.ceil(arrangedProjects.length / MOODBOARD_SLOTS.length)
     const desktopCanvasHeight = useMemo(() => {
         const extraRows = Math.max(rows - 1, 0)
         return `${MOODBOARD_BASE_HEIGHT + extraRows * MOODBOARD_ROW_HEIGHT}px`
     }, [rows])
 
-    if (works.length === 0) return null
+    if (projects.length === 0) return null
 
     return (
         <section
@@ -416,15 +416,15 @@ export default function MixedPreviewSection({
                         minHeight: '980px',
                     }}
                 >
-                    {arrangedWorks.map((work, index) => {
+                    {arrangedProjects.map((project, index) => {
                         const baseSlot = MOODBOARD_SLOTS[index % MOODBOARD_SLOTS.length]
                         // Slot finale = backend manuale (se presente) altrimenti slot automatico.
-                        const slot = resolveSlotFromBackend(work, baseSlot, desktopBreakpoint)
+                        const slot = resolveSlotFromBackend(project, baseSlot, desktopBreakpoint)
                         const row = Math.floor(index / MOODBOARD_SLOTS.length)
                         return (
                             <MoodboardCard
-                                key={work._id}
-                                work={work}
+                                key={project._id}
+                                project={project}
                                 slot={slot}
                                 row={row}
                                 breakpoint={desktopBreakpoint}
@@ -442,10 +442,10 @@ export default function MixedPreviewSection({
                         gap: 'clamp(0.9rem, 2.8vw, 1.4rem)',
                     }}
                 >
-                    {works.map((work) => (
+                    {projects.map((project) => (
                         <Link
-                            key={work._id}
-                            href={getWorkHref(work)}
+                            key={project._id}
+                            href={getProjectHref(project)}
                             style={{
                                 display: 'flex',
                                 alignItems: 'flex-start',
@@ -466,7 +466,7 @@ export default function MixedPreviewSection({
                                     alignItems: 'center',
                                 }}
                             >
-                                {work.imageUrl && (
+                                {project.imageUrl && (
                                     <div
                                         style={{
                                             position: 'relative',
@@ -475,8 +475,8 @@ export default function MixedPreviewSection({
                                         }}
                                     >
                                         <img
-                                            src={work.imageUrl}
-                                            alt={work.title}
+                                            src={project.imageUrl}
+                                            alt={project.title}
                                             style={{
                                                 width: 'auto',
                                                 height: 'auto',
@@ -511,7 +511,7 @@ export default function MixedPreviewSection({
                                                     lineHeight: 1.2,
                                                 }}
                                             >
-                                                {work.title}
+                                                {project.title}
                                             </span>
                                             <span
                                                 style={{
@@ -523,7 +523,7 @@ export default function MixedPreviewSection({
                                                     lineHeight: 1.2,
                                                 }}
                                             >
-                                                {work.year}
+                                                {project.year}
                                             </span>
                                         </div>
                                     </div>

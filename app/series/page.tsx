@@ -1,19 +1,19 @@
 import PortfolioMenuSection from '@/app/components/PortfolioMenuSection'
-import { enrichWorksWithMedia } from '@/app/components/work-data'
-import type { SanityWork } from '@/app/components/work-types'
+import { enrichProjectsWithMedia } from '@/app/components/project-data'
+import type { SanityProject } from '@/app/components/project-types'
 import { client } from '@/sanity/lib/client'
-import { allWorksQuery } from '@/sanity/lib/queries'
+import { allProjectsQuery } from '@/sanity/lib/queries'
 
 export default async function SeriesPage() {
   // Pagina Series: lavori autoriali/personali.
-  const works: SanityWork[] = await client.fetch(allWorksQuery)
-  const worksWithMedia = enrichWorksWithMedia(works)
-  const seriesOnly = worksWithMedia.filter((work) => work.kind === 'series')
+  const projects: SanityProject[] = await client.fetch(allProjectsQuery)
+  const projectsWithMedia = enrichProjectsWithMedia(projects)
+  const seriesOnly = projectsWithMedia.filter((project) => project.kind === 'series')
 
   return (
     <main style={{ cursor: 'none' }}>
       <PortfolioMenuSection
-        works={seriesOnly}
+        projects={seriesOnly}
         sectionId="series"
         headingText="Series"
         introText="Progetti autonomi e di ricerca: percorsi personali, sviluppati in continuità e raccolti per serie."
