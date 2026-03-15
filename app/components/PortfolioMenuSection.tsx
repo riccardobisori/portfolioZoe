@@ -12,6 +12,11 @@ interface PortfolioMenuSectionProps {
   emptyText: string
 }
 
+function getWorkHref(work: WorkWithUrl) {
+  const isSeries = work.kind === 'series'
+  return isSeries ? `/series/${work.slug.current}` : `/works/${work.slug.current}`
+}
+
 export default function PortfolioMenuSection({
   works,
   sectionId,
@@ -91,7 +96,7 @@ export default function PortfolioMenuSection({
           {works.map((work, index) => (
             <Link
               key={work._id}
-              href={`/works/${work.slug.current}`}
+              href={getWorkHref(work)}
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'minmax(120px, 190px) 1fr',
@@ -173,7 +178,7 @@ export default function PortfolioMenuSection({
                     color: 'rgba(26,24,20,0.6)',
                   }}
                 >
-                  {work.category?.title || 'Uncategorized'} {'\u2192'}
+                  {work.kind === 'series' ? 'Series' : 'Works'} {'\u2192'}
                 </p>
               </div>
             </Link>

@@ -22,10 +22,22 @@ export interface WorkPreviewLayout extends WorkPreviewLayoutValues {
     } | null
 }
 
+export interface HomePreviewCardDocument {
+    _id: string
+    project?: SanityWork | null
+    image?: {
+        asset?: {
+            _ref?: string
+        }
+    } | null
+    previewLayout?: WorkPreviewLayout | null
+}
+
 export interface SanityWork {
     _id: string
     title: string
     slug: { current: string }
+    kind: 'work' | 'series'
     year: string
     description?: string | null
     mainImage: {
@@ -33,10 +45,6 @@ export interface SanityWork {
             _ref?: string
         }
     } | null
-    category: {
-        title: string
-        slug: { current: string }
-    }
     // Layout opzionale usato solo nella preview moodboard home.
     previewLayout?: WorkPreviewLayout | null
 }

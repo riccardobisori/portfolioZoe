@@ -8,9 +8,7 @@ export default async function WorksPage() {
     // Pagina Works: menu ordinato dei lavori professionali.
     const works: SanityWork[] = await client.fetch(allWorksQuery)
     const worksWithMedia = enrichWorksWithMedia(works)
-    const worksOnly = worksWithMedia.filter(
-        (work) => work.category?.slug?.current?.toLowerCase() !== 'series'
-    )
+    const worksOnly = worksWithMedia.filter((work) => work.kind !== 'series')
 
     return (
         <main style={{ cursor: 'none' }}>

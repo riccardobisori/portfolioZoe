@@ -1,14 +1,16 @@
 import { client } from '@/sanity/lib/client'
-import { featuredWorksQuery } from '@/sanity/lib/queries'
+import { featuredWorksQuery, homePreviewCardsQuery } from '@/sanity/lib/queries'
 import MixedPreviewSection from './MixedPreviewSection'
-import { enrichWorksWithMedia } from './work-data'
-import type { SanityWork } from './work-types'
+import { enrichWorksWithMedia, mapHomePreviewCardsToWorks } from './work-data'
+import type { HomePreviewCardDocument, SanityWork } from './work-types'
 
 // Blocchetto "preview" della home:
-// prende solo i featured works e li prepara per la masonry.
+// prende le card editoriali dedicate e le prepara per la masonry.
 export default async function HomeWorksPreview() {
-    const works: SanityWork[] = await client.fetch(featuredWorksQuery)
-    const worksWithMedia = enrichWorksWithMedia(works)
+    const cards: HomePreviewCardDocument[] = await client.fetch(homePreviewCardsQuery)
+    const worksWithMedia = cards.length > 0
+        ? mapHomePreviewCardsToWorks(cards)
+        : enrichWorksWithMedia(await client.fetch<SanityWork[]>(featuredWorksQuery))
 
     return (
         <MixedPreviewSection

@@ -10,18 +10,13 @@ export const featuredWorksQuery = groq`
     _id,
     title,
     slug,
+    "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
     year,
     mainImage,
     // Dati layout manuale per la moodboard home.
-    previewLayout,
-    category-> {    
-      title,
-      slug
-    }
+    previewLayout
   }
 `
-// category-> significa "segui il riferimento" — come una JOIN in SQL
-// invece dell'ID della categoria, restituisce l'oggetto categoria completo
 
 // Query per tutti i lavori — usata nella pagina galleria
 export const allWorksQuery = groq`
@@ -29,23 +24,10 @@ export const allWorksQuery = groq`
     _id,
     title,
     slug,
+    "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
     year,
     description,
-    mainImage,
-    category-> {
-      title,
-      slug
-    }
-  }
-`
-
-// Query per le categorie ordinate
-export const categoriesQuery = groq`
-  *[_type == "category"] | order(order asc) {
-    _id,
-    title,
-    slug,
-    description,
+    mainImage
   }
 `
 
@@ -56,14 +38,12 @@ export const workBySlugQuery = groq`
     _id,
     title,
     slug,
+    "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
     year,
     description,
     mainImage,
     gallery,
-    category-> {
-      title,
-      slug
-    }
+    previewLayout
   }
 `
 
@@ -74,5 +54,22 @@ export const siteSettingsQuery = groq`
     heroImage,
     heroTitle,
     heroSubtitle,
+  }
+`
+
+export const homePreviewCardsQuery = groq`
+  *[_type == "homePreviewCard" && coalesce(enabled, true) == true] | order(order asc, _createdAt asc) {
+    _id,
+    image,
+    previewLayout,
+    project->{
+      _id,
+      title,
+      slug,
+      "kind": coalesce(kind, select(category->slug.current == "series" => "series", "work")),
+      year,
+      mainImage,
+      previewLayout
+    }
   }
 `

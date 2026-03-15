@@ -92,6 +92,11 @@ function getCardAspectRatio(work: WorkWithUrl, preferred: MoodboardSlot['preferr
     return preferred === 'portrait' ? '2 / 3' : '3 / 2'
 }
 
+function getWorkHref(work: WorkWithUrl) {
+    const isSeries = work.kind === 'series'
+    return isSeries ? `/series/${work.slug.current}` : `/works/${work.slug.current}`
+}
+
 function resolveLayoutForBreakpoint(layout: WorkWithUrl['previewLayout'], breakpoint: DesktopBreakpointKey) {
     if (!layout) return null
     const override = layout.responsive?.[breakpoint]
@@ -215,7 +220,7 @@ function MoodboardCard({
 
     return (
         <Link
-            href={`/works/${work.slug.current}`}
+            href={getWorkHref(work)}
             onMouseEnter={() => setHoveredId(work._id)}
             onMouseLeave={() => setHoveredId(null)}
             onFocus={() => setHoveredId(work._id)}
@@ -440,7 +445,7 @@ export default function MixedPreviewSection({
                     {works.map((work) => (
                         <Link
                             key={work._id}
-                            href={`/works/${work.slug.current}`}
+                            href={getWorkHref(work)}
                             style={{
                                 display: 'flex',
                                 alignItems: 'flex-start',

@@ -51,13 +51,18 @@ const work = {
             of: [{ type: 'image', options: { hotspot: true } }],
         },
         {
-            // Riferimento alla categoria — come una foreign key in SQL
-            // Sanity crea automaticamente il link tra i documenti
-            name: 'category',
-            title: 'Categoria',
-            type: 'reference',      // tipo speciale — punta a un altro documento
-            to: [{ type: 'category' }], // punta a un documento di tipo 'category'
+            name: 'kind',
+            title: 'Tipo Progetto',
+            type: 'string',
+            initialValue: 'work',
             validation: (Rule: ValidationRule) => Rule.required(),
+            options: {
+                list: [
+                    { title: 'Works', value: 'work' },
+                    { title: 'Series', value: 'series' },
+                ],
+                layout: 'radio',
+            },
         },
         {
             name: 'year',

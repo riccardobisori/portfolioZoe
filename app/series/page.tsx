@@ -8,9 +8,7 @@ export default async function SeriesPage() {
   // Pagina Series: lavori autoriali/personali.
   const works: SanityWork[] = await client.fetch(allWorksQuery)
   const worksWithMedia = enrichWorksWithMedia(works)
-  const seriesOnly = worksWithMedia.filter(
-    (work) => work.category?.slug?.current?.toLowerCase() === 'series'
-  )
+  const seriesOnly = worksWithMedia.filter((work) => work.kind === 'series')
 
   return (
     <main style={{ cursor: 'none' }}>
