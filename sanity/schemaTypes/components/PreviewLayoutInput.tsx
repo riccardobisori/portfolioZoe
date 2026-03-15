@@ -299,6 +299,7 @@ const VIEWPORT_PRESETS = [
 export default function PreviewLayoutInput(props: ObjectInputProps) {
   const client = useClient({ apiVersion: '2026-03-07' })
   const lastPresetRef = useRef<string | undefined>(undefined)
+  const lastBreakpointRef = useRef<DesktopBreakpointKey | undefined>(undefined)
   const hasInitializedRef = useRef(false)
   const dragStateRef = useRef<DragState | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -315,16 +316,17 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
   const scopedFormLayout = useMemo(
     () => {
       const base = props.value as PreviewLayoutRaw | undefined
+      const scoped = resolveLayoutForBreakpoint(base, activeBreakpoint)
       return {
-        preset: base?.preset,
-        x: base?.x,
-        y: base?.y,
-        width: base?.width,
-        z: base?.z,
-        preferred: base?.preferred,
+        preset: scoped?.preset,
+        x: scoped?.x,
+        y: scoped?.y,
+        width: scoped?.width,
+        z: scoped?.z,
+        preferred: scoped?.preferred,
       }
     },
-    [props.value]
+    [activeBreakpoint, props.value]
   )
   const preset = typeof scopedFormLayout.preset === 'string' ? (scopedFormLayout.preset as PresetKey) : 'auto'
   const documentValue = useFormValue([]) as DocumentWithImage | undefined
@@ -574,16 +576,24 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
 
   const applyLayoutPatch = useCallback(
     (nextValues: Partial<LayoutValues>) => {
-      const patches: FormPatch[] = [setIfMissing({}, [])]
-      if (typeof nextValues.x === 'number') patches.push(set(snap(clamp(nextValues.x, 0, 90)), ['x']))
-      if (typeof nextValues.y === 'number') patches.push(set(snap(clamp(nextValues.y, 0, 95)), ['y']))
+      const pathPrefix = ['responsive', activeBreakpoint] as const
+      const patches: FormPatch[] = [
+        setIfMissing({}, []),
+        setIfMissing({}, ['responsive']),
+        setIfMissing({}, [...pathPrefix]),
+      ]
+      if (typeof nextValues.x === 'number')
+        patches.push(set(snap(clamp(nextValues.x, 0, 90)), [...pathPrefix, 'x']))
+      if (typeof nextValues.y === 'number')
+        patches.push(set(snap(clamp(nextValues.y, 0, 95)), [...pathPrefix, 'y']))
       if (typeof nextValues.width === 'number')
-        patches.push(set(snap(clamp(nextValues.width, 10, 45)), ['width']))
-      if (typeof nextValues.z === 'number') patches.push(set(snap(clamp(nextValues.z, 1, 10)), ['z']))
-      if (nextValues.preferred) patches.push(set(nextValues.preferred, ['preferred']))
+        patches.push(set(snap(clamp(nextValues.width, 10, 45)), [...pathPrefix, 'width']))
+      if (typeof nextValues.z === 'number')
+        patches.push(set(snap(clamp(nextValues.z, 1, 10)), [...pathPrefix, 'z']))
+      if (nextValues.preferred) patches.push(set(nextValues.preferred, [...pathPrefix, 'preferred']))
       if (patches.length > 0) props.onChange(PatchEvent.from(patches))
     },
-    [props]
+    [activeBreakpoint, props]
   )
 
   useEffect(() => {
@@ -591,6 +601,13 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     // Così non sovrascriviamo eventuali override manuali già salvati.
     if (!hasInitializedRef.current) {
       hasInitializedRef.current = true
+      lastPresetRef.current = preset
+      lastBreakpointRef.current = activeBreakpoint
+      return
+    }
+
+    if (lastBreakpointRef.current !== activeBreakpoint) {
+      lastBreakpointRef.current = activeBreakpoint
       lastPresetRef.current = preset
       return
     }
@@ -602,18 +619,21 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     if (preset === 'auto') return
     const values = PRESET_VALUES[preset]
     if (!values) return
+    const pathPrefix = ['responsive', activeBreakpoint] as const
 
     props.onChange(
       PatchEvent.from([
         setIfMissing({}, []),
-        set(values.x, ['x']),
-        set(values.y, ['y']),
-        set(values.width, ['width']),
-        set(values.z, ['z']),
-        set(values.preferred, ['preferred']),
+        setIfMissing({}, ['responsive']),
+        setIfMissing({}, [...pathPrefix]),
+        set(values.x, [...pathPrefix, 'x']),
+        set(values.y, [...pathPrefix, 'y']),
+        set(values.width, [...pathPrefix, 'width']),
+        set(values.z, [...pathPrefix, 'z']),
+        set(values.preferred, [...pathPrefix, 'preferred']),
       ])
     )
-  }, [preset, props])
+  }, [activeBreakpoint, preset, props])
 
   useEffect(() => {
     if (!isDragging) return
@@ -675,30 +695,34 @@ export default function PreviewLayoutInput(props: ObjectInputProps) {
     if (preset === 'auto') return
     const values = PRESET_VALUES[preset]
     if (!values) return
+    const pathPrefix = ['responsive', activeBreakpoint] as const
     props.onChange(
       PatchEvent.from([
         setIfMissing({}, []),
-        set(values.x, ['x']),
-        set(values.y, ['y']),
-        set(values.width, ['width']),
-        set(values.z, ['z']),
-        set(values.preferred, ['preferred']),
+        setIfMissing({}, ['responsive']),
+        setIfMissing({}, [...pathPrefix]),
+        set(values.x, [...pathPrefix, 'x']),
+        set(values.y, [...pathPrefix, 'y']),
+        set(values.width, [...pathPrefix, 'width']),
+        set(values.z, [...pathPrefix, 'z']),
+        set(values.preferred, [...pathPrefix, 'preferred']),
       ])
     )
-  }, [preset, props])
+  }, [activeBreakpoint, preset, props])
 
   const clearManualOverrides = useCallback(() => {
+    const pathPrefix = ['responsive', activeBreakpoint] as const
     props.onChange(
       PatchEvent.from([
-        unset(['x']),
-        unset(['y']),
-        unset(['width']),
-        unset(['z']),
-        unset(['preferred']),
-        unset(['preset']),
+        unset([...pathPrefix, 'x']),
+        unset([...pathPrefix, 'y']),
+        unset([...pathPrefix, 'width']),
+        unset([...pathPrefix, 'z']),
+        unset([...pathPrefix, 'preferred']),
+        unset([...pathPrefix, 'preset']),
       ])
     )
-  }, [props])
+  }, [activeBreakpoint, props])
 
   const handleCanvasKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {
