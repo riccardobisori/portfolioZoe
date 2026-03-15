@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { ProjectWithUrl } from './project-types'
 
@@ -209,19 +209,7 @@ function MoodboardCard({
 }) {
     const hasManualPosition = hasManualLayoutForBreakpoint(project, breakpoint)
     const isHovered = hoveredId === project._id
-    const isRightEdgeSlot = !hasManualPosition && parseFloat(slot.left) >= 70
     const top = hasManualPosition ? slot.top : `calc(${slot.top} + ${row * 490}px)`
-    const evenRow = row % 2 === 0
-    const baseOffsetX = hasManualPosition
-        ? 0
-        : slot.preferred === 'landscape'
-            ? (evenRow ? -4 : 4)
-            : (evenRow ? -2 : 2)
-    const baseOffsetY = hasManualPosition
-        ? 0
-        : slot.preferred === 'landscape'
-            ? (evenRow ? -2 : 4)
-            : (evenRow ? -1 : 3)
     const aspectRatio = getCardAspectRatio(project, slot.preferred)
 
     return (
@@ -239,8 +227,7 @@ function MoodboardCard({
                 textDecoration: 'none',
                 color: 'inherit',
                 zIndex: isHovered ? 120 : hasManualPosition ? slot.z : slot.z + row * 8,
-                // Hover "soft": piccolo lift + scale moderata, senza spostamenti al centro.
-                transform: `translate(${baseOffsetX + (isRightEdgeSlot ? -8 : 0)}px, ${baseOffsetY + (isHovered ? -2 : 0)}px) scale(${isHovered ? 1.03 : 1})`,
+                transform: `scale(${isHovered ? 1.015 : 1})`,
                 transition: 'transform 520ms cubic-bezier(0.22, 1, 0.36, 1), z-index 0ms linear 120ms',
                 willChange: 'transform',
                 transformOrigin: 'center center',
@@ -268,8 +255,7 @@ function MoodboardCard({
                             boxShadow: isHovered
                                 ? '0 36px 72px rgba(26, 24, 20, 0.34)'
                                 : '0 10px 24px rgba(26, 24, 20, 0.14)',
-                            transform: isHovered ? 'scale(1.01)' : 'scale(1)',
-                            transition: 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 420ms ease',
+                            transition: 'box-shadow 420ms ease',
                         }}
                     />
                 )}
@@ -319,10 +305,131 @@ function MoodboardCard({
     )
 }
 
+function MobileMoodboardCard({ project }: { project: ProjectWithUrl }) {
+    const cardRef = useRef<HTMLDivElement | null>(null)
+    const [isInView, setIsInView] = useState(false)
+    const [showText, setShowText] = useState(false)
+
+    useEffect(() => {
+        const node = cardRef.current
+        if (!node) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const entry = entries[0]
+                setIsInView(entry.isIntersecting)
+            },
+            {
+                threshold: 0.55,
+            }
+        )
+
+        observer.observe(node)
+        return () => observer.disconnect()
+    }, [])
+
+    useEffect(() => {
+        if (showText || !isInView) return
+        const timer = window.setTimeout(() => setShowText(true), 1200)
+        return () => window.clearTimeout(timer)
+    }, [isInView, showText])
+
+    return (
+        <Link
+            href={getProjectHref(project)}
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                minHeight: 'auto',
+                paddingTop: 0,
+                paddingBottom: 0,
+                textDecoration: 'none',
+                color: 'inherit',
+            }}
+        >
+            <div
+                ref={cardRef}
+                style={{
+                    position: 'relative',
+                    width: '100%',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+            >
+                {project.imageUrl && (
+                    <div
+                        style={{
+                            position: 'relative',
+                            width: '100%',
+                        }}
+                    >
+                        <img
+                            src={project.imageUrl}
+                            alt={project.title}
+                            style={{
+                                width: '100%',
+                                height: 'auto',
+                                maxHeight: '84svh',
+                                display: 'block',
+                            }}
+                        />
+                        <div
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.35rem',
+                                padding: '0.9rem',
+                                pointerEvents: 'none',
+                                opacity: showText ? 1 : 0,
+                                transform: `translateY(${showText ? 0 : 4}px)`,
+                                transition: 'opacity 780ms ease-out, transform 780ms cubic-bezier(0.22, 1, 0.36, 1)',
+                            }}
+                        >
+                            <span
+                                style={{
+                                    fontSize: '0.58rem',
+                                    fontWeight: 600,
+                                    letterSpacing: '0.12em',
+                                    textTransform: 'uppercase',
+                                    color: 'rgba(247,244,239,0.96)',
+                                    lineHeight: 1.2,
+                                    textAlign: 'center',
+                                }}
+                            >
+                                {project.title}
+                            </span>
+                            <span
+                                style={{
+                                    fontSize: '0.56rem',
+                                    letterSpacing: '0.14em',
+                                    textTransform: 'uppercase',
+                                    color: 'rgba(247,244,239,0.9)',
+                                    lineHeight: 1.2,
+                                    textAlign: 'center',
+                                }}
+                            >
+                                {project.year}
+                            </span>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </Link>
+    )
+}
+
 export default function MixedPreviewSection({
     projects,
     sectionId = 'preview',
 }: MixedPreviewSectionProps) {
+    const mobileFrameGap = 'clamp(12px, 2.6vw, 16px)'
     const [isDesktop, setIsDesktop] = useState(false)
     const [desktopBreakpoint, setDesktopBreakpoint] = useState<DesktopBreakpointKey>('desktop1440')
     const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -448,92 +555,13 @@ export default function MixedPreviewSection({
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 'clamp(12px, 2.6vw, 16px)',
+                        gap: mobileFrameGap,
+                        paddingLeft: mobileFrameGap,
+                        paddingRight: mobileFrameGap,
                     }}
                 >
                     {projects.map((project) => (
-                        <Link
-                            key={project._id}
-                            href={getProjectHref(project)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: '100%',
-                                minHeight: 'auto',
-                                paddingTop: 0,
-                                paddingBottom: 0,
-                                textDecoration: 'none',
-                                color: 'inherit',
-                            }}
-                        >
-                            <div
-                                style={{
-                                    position: 'relative',
-                                    width: '100vw',
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                }}
-                            >
-                                {project.imageUrl && (
-                                    <div
-                                        style={{
-                                            position: 'relative',
-                                            width: 'fit-content',
-                                            maxWidth: '100vw',
-                                        }}
-                                    >
-                                        <img
-                                            src={project.imageUrl}
-                                            alt={project.title}
-                                            style={{
-                                                width: 'auto',
-                                                height: 'auto',
-                                                maxWidth: '100vw',
-                                                maxHeight: '84svh',
-                                                display: 'block',
-                                            }}
-                                        />
-                                        <div
-                                            style={{
-                                                position: 'absolute',
-                                                inset: 0,
-                                                display: 'flex',
-                                                alignItems: 'flex-end',
-                                                justifyContent: 'space-between',
-                                                padding: 'clamp(0.5rem, 2vw, 0.8rem)',
-                                                pointerEvents: 'none',
-                                            }}
-                                        >
-                                            <span
-                                                style={{
-                                                    fontSize: '0.58rem',
-                                                    fontWeight: 600,
-                                                    letterSpacing: '0.12em',
-                                                    textTransform: 'uppercase',
-                                                    color: 'rgba(247,244,239,0.96)',
-                                                    lineHeight: 1.2,
-                                                }}
-                                            >
-                                                {project.title}
-                                            </span>
-                                            <span
-                                                style={{
-                                                    fontSize: '0.56rem',
-                                                    letterSpacing: '0.14em',
-                                                    textTransform: 'uppercase',
-                                                    color: 'rgba(247,244,239,0.9)',
-                                                    lineHeight: 1.2,
-                                                }}
-                                            >
-                                                {project.year}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </Link>
+                        <MobileMoodboardCard key={project._id} project={project} />
                     ))}
                 </div>
             )}
