@@ -382,7 +382,7 @@ export default function MixedPreviewSection({
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.15rem',
+                        gap: 'clamp(0.9rem, 2.8vw, 1.4rem)',
                     }}
                 >
                     {works.map((work) => (
@@ -391,9 +391,11 @@ export default function MixedPreviewSection({
                             href={`/works/${work.slug.current}`}
                             style={{
                                 display: 'flex',
-                                alignItems: 'center',
+                                alignItems: 'flex-start',
                                 justifyContent: 'center',
-                                minHeight: '88svh',
+                                minHeight: 'auto',
+                                paddingTop: 'clamp(0.35rem, 1.2vw, 0.65rem)',
+                                paddingBottom: 'clamp(0.35rem, 1.2vw, 0.65rem)',
                                 textDecoration: 'none',
                                 color: 'inherit',
                             }}
@@ -408,23 +410,67 @@ export default function MixedPreviewSection({
                                 }}
                             >
                                 {work.imageUrl && (
-                                    <img
-                                        src={work.imageUrl}
-                                        alt={work.title}
+                                    <div
                                         style={{
-                                            width: 'auto',
-                                            height: 'auto',
+                                            position: 'relative',
+                                            width: 'fit-content',
                                             maxWidth: '92vw',
-                                            maxHeight: '78svh',
-                                            minWidth: 'min(72vw, 230px)',
-                                            display: 'block',
-                                            borderRadius: '1px',
-                                            border: '1px solid rgba(0, 0, 0, 0.28)',
-                                            boxShadow: '0 16px 34px rgba(26,24,20,0.15)',
                                         }}
-                                    />
+                                    >
+                                        <img
+                                            src={work.imageUrl}
+                                            alt={work.title}
+                                            style={{
+                                                width: 'auto',
+                                                height: 'auto',
+                                                maxWidth: '92vw',
+                                                maxHeight: '78svh',
+                                                minWidth: 'min(72vw, 230px)',
+                                                display: 'block',
+                                                borderRadius: '1px',
+                                                border: '1px solid rgba(0, 0, 0, 0.28)',
+                                                boxShadow: '0 3px 8px rgba(26,24,20,0.26), 0 18px 32px rgba(26,24,20,0.28)',
+                                            }}
+                                        />
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                display: 'flex',
+                                                alignItems: 'flex-end',
+                                                justifyContent: 'space-between',
+                                                padding: 'clamp(0.5rem, 2vw, 0.8rem)',
+                                                pointerEvents: 'none',
+                                            }}
+                                        >
+                                            <span
+                                                style={{
+                                                    fontSize: '0.58rem',
+                                                    fontWeight: 600,
+                                                    letterSpacing: '0.12em',
+                                                    textTransform: 'uppercase',
+                                                    color: 'rgba(247,244,239,0.96)',
+                                                    textShadow: '0 1px 3px rgba(0,0,0,0.65)',
+                                                    lineHeight: 1.2,
+                                                }}
+                                            >
+                                                {work.title}
+                                            </span>
+                                            <span
+                                                style={{
+                                                    fontSize: '0.56rem',
+                                                    letterSpacing: '0.14em',
+                                                    textTransform: 'uppercase',
+                                                    color: 'rgba(247,244,239,0.9)',
+                                                    textShadow: '0 1px 3px rgba(0,0,0,0.65)',
+                                                    lineHeight: 1.2,
+                                                }}
+                                            >
+                                                {work.year}
+                                            </span>
+                                        </div>
+                                    </div>
                                 )}
-                                {/* Mobile: niente hover reale, quindi teniamo immagine pulita senza testo fisso */}
                             </div>
                         </Link>
                     ))}

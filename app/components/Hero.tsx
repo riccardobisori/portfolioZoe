@@ -138,11 +138,9 @@ export default function Hero({ heroImage }: HeroProps) {
         return () => observer.disconnect()
     }, [])
 
-    // Costruiamo l'URL dell'immagine se esiste
-    // width(1920) = risoluzione massima per schermi grandi
-    // quality(90) = qualità alta ma non massima, bilancia peso e qualità
+    // Costruiamo l'URL immagine ad alta risoluzione per evitare perdita su mobile high-DPR.
     const imageUrl = heroImage
-        ? urlFor(heroImage).width(1920).height(1080).quality(90).url()
+        ? urlFor(heroImage).width(3200).quality(95).url()
         : null
 
     const showArrow = !isTouchDevice && expandProgress >= 0.985
@@ -215,6 +213,8 @@ export default function Hero({ heroImage }: HeroProps) {
                         alt="Ginevra Zoe Giannelli"
                         fill
                         priority
+                        quality={95}
+                        sizes="100vw"
                         style={{
                             objectFit: 'cover',
                             objectPosition: 'center',

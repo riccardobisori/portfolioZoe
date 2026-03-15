@@ -16,9 +16,7 @@ export default function Nav() {
   const shouldUseLightNav = heroLightPhase && !isPastHero
   const navTextColor = shouldUseLightNav ? '#f7f4ef' : 'var(--ink)'
   const navBorderColor = shouldUseLightNav ? 'rgba(247, 244, 239, 0.42)' : 'rgba(26,24,20,0.2)'
-  const mobilePanelBg = shouldUseLightNav
-    ? 'rgba(15, 13, 10, 0.94)'
-    : 'rgba(247, 244, 239, 0.96)'
+  const mobilePanelBg = 'transparent'
   const mobilePanelBorder = shouldUseLightNav
     ? 'rgba(247, 244, 239, 0.22)'
     : 'rgba(26,24,20,0.16)'
@@ -154,7 +152,7 @@ export default function Nav() {
           type="button"
           aria-label={mobileMenuOpen ? 'Chiudi menu' : 'Apri menu'}
           aria-expanded={mobileMenuOpen}
-          className="md:hidden"
+          className="grid place-items-center md:hidden"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           style={{
             width: '44px',
@@ -162,8 +160,6 @@ export default function Nav() {
             border: 0,
             background: 'transparent',
             color: navTextColor,
-            display: 'grid',
-            placeItems: 'center',
             padding: 0,
           }}
         >
@@ -212,7 +208,6 @@ export default function Nav() {
           transition: 'max-height 0.28s ease, opacity 0.2s ease',
           borderBottom: `1px solid ${mobilePanelBorder}`,
           background: mobilePanelBg,
-          backdropFilter: 'blur(5px)',
         }}
       >
         <ul
