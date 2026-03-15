@@ -367,8 +367,8 @@ export default function MixedPreviewSection({
                 overflow: 'hidden',
                 paddingTop: 'clamp(66px, 7vw, 96px)',
                 paddingBottom: 'clamp(2px, 0.6vw, 8px)',
-                paddingLeft: 'clamp(16px, 3vw, 48px)',
-                paddingRight: 'clamp(16px, 3vw, 48px)',
+                paddingLeft: isDesktop ? 'clamp(16px, 3vw, 48px)' : 0,
+                paddingRight: isDesktop ? 'clamp(16px, 3vw, 48px)' : 0,
             }}
         >
             <div
@@ -439,7 +439,7 @@ export default function MixedPreviewSection({
                     style={{
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 'clamp(0.9rem, 2.8vw, 1.4rem)',
+                        gap: 'clamp(12px, 2.6vw, 16px)',
                     }}
                 >
                     {projects.map((project) => (
@@ -448,11 +448,12 @@ export default function MixedPreviewSection({
                             href={getProjectHref(project)}
                             style={{
                                 display: 'flex',
-                                alignItems: 'flex-start',
+                                alignItems: 'center',
                                 justifyContent: 'center',
+                                width: '100%',
                                 minHeight: 'auto',
-                                paddingTop: 'clamp(0.35rem, 1.2vw, 0.65rem)',
-                                paddingBottom: 'clamp(0.35rem, 1.2vw, 0.65rem)',
+                                paddingTop: 0,
+                                paddingBottom: 0,
                                 textDecoration: 'none',
                                 color: 'inherit',
                             }}
@@ -460,7 +461,7 @@ export default function MixedPreviewSection({
                             <div
                                 style={{
                                     position: 'relative',
-                                    width: '100%',
+                                    width: '100vw',
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'center',
@@ -471,7 +472,7 @@ export default function MixedPreviewSection({
                                         style={{
                                             position: 'relative',
                                             width: 'fit-content',
-                                            maxWidth: '92vw',
+                                            maxWidth: '100vw',
                                         }}
                                     >
                                         <img
@@ -480,13 +481,9 @@ export default function MixedPreviewSection({
                                             style={{
                                                 width: 'auto',
                                                 height: 'auto',
-                                                maxWidth: '92vw',
-                                                maxHeight: '78svh',
-                                                minWidth: 'min(72vw, 230px)',
+                                                maxWidth: '100vw',
+                                                maxHeight: '84svh',
                                                 display: 'block',
-                                                borderRadius: '1px',
-                                                border: '1px solid rgba(0, 0, 0, 0.28)',
-                                                boxShadow: '0 3px 8px rgba(26,24,20,0.26), 0 18px 32px rgba(26,24,20,0.28)',
                                             }}
                                         />
                                         <div
@@ -507,7 +504,6 @@ export default function MixedPreviewSection({
                                                     letterSpacing: '0.12em',
                                                     textTransform: 'uppercase',
                                                     color: 'rgba(247,244,239,0.96)',
-                                                    textShadow: '0 1px 3px rgba(0,0,0,0.65)',
                                                     lineHeight: 1.2,
                                                 }}
                                             >
@@ -519,7 +515,6 @@ export default function MixedPreviewSection({
                                                     letterSpacing: '0.14em',
                                                     textTransform: 'uppercase',
                                                     color: 'rgba(247,244,239,0.9)',
-                                                    textShadow: '0 1px 3px rgba(0,0,0,0.65)',
                                                     lineHeight: 1.2,
                                                 }}
                                             >
