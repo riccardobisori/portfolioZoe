@@ -13,6 +13,7 @@ export default function Hero({ heroImage }: HeroProps) {
     const [expandProgress, setExpandProgress] = useState(0)
     const [scrollUnlocked, setScrollUnlocked] = useState(false)
     const [isTouchDevice, setIsTouchDevice] = useState(false)
+    const [showScrollHint, setShowScrollHint] = useState(false)
     const [titleWidth, setTitleWidth] = useState(0)
     // progressRef = valore renderizzato; targetRef = valore verso cui animiamo in modo fluido.
     const progressRef = useRef(0)
@@ -56,6 +57,8 @@ export default function Hero({ heroImage }: HeroProps) {
 
         const SCROLL_TO_PROGRESS = 0.001
 
+        // Finché la hero è "chiusa", intercettiamo la wheel solo in cima alla pagina
+        // e la convertiamo in progresso dell'animazione di apertura.
         const onWheel = (event: WheelEvent) => {
             if (scrollUnlocked) return
 
@@ -149,12 +152,30 @@ export default function Hero({ heroImage }: HeroProps) {
     const imageUrl = isTouchDevice ? mobileImageUrl : desktopImageUrl
 
     const showArrow = !isTouchDevice && expandProgress >= 0.985
+    // La freccia serve come invito iniziale: dopo il click la nascondiamo
+    // per non farla sembrare un elemento persistente della pagina.
+    const shouldRenderArrow = showArrow && !scrollUnlocked
 
     useEffect(() => {
         window.dispatchEvent(
             new CustomEvent('hero-light-phase', { detail: showArrow })
         )
     }, [showArrow])
+
+    useEffect(() => {
+        if (!shouldRenderArrow) {
+            setShowScrollHint(false)
+            return
+        }
+
+        // Il label "scroll down" non entra insieme alla freccia:
+        // aspettiamo un attimo per farlo sembrare un invito secondario, piu elegante.
+        const timeout = window.setTimeout(() => {
+            setShowScrollHint(true)
+        }, 1400)
+
+        return () => window.clearTimeout(timeout)
+    }, [shouldRenderArrow])
 
     const revealProgress = showArrow ? 1 : expandProgress
     const curtainWidth = `${50 - revealProgress * 50}%`
@@ -356,16 +377,55 @@ export default function Hero({ heroImage }: HeroProps) {
                     justifyContent: 'center',
                     fontSize: isTouchDevice ? '2rem' : '2.45rem',
                     lineHeight: 1,
-                    opacity: showArrow ? 1 : 0,
-                    pointerEvents: showArrow ? 'auto' : 'none',
+                    opacity: shouldRenderArrow ? 1 : 0,
+                    pointerEvents: shouldRenderArrow ? 'auto' : 'none',
                     transition: 'opacity 0.35s ease',
-                    transitionDelay: showArrow ? '260ms' : '0ms',
+                    transitionDelay: shouldRenderArrow ? '260ms' : '0ms',
                     zIndex: 6,
                     background: 'transparent',
-                    animation: showArrow ? 'arrowFloat 1.3s ease-in-out infinite' : 'none',
+                    animation: shouldRenderArrow ? 'arrowFloat 1.3s ease-in-out infinite' : 'none',
                 }}
             >
-                ↓
+                <span
+                    aria-hidden="true"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.9rem',
+                    }}
+                >
+                    <span
+                        style={{
+                            fontSize: '0.66rem',
+                            letterSpacing: '0.34em',
+                            textTransform: 'uppercase',
+                            whiteSpace: 'nowrap',
+                            opacity: shouldRenderArrow && showScrollHint ? 0.82 : 0,
+                            transform: shouldRenderArrow && showScrollHint
+                                ? 'translateX(0)'
+                                : 'translateX(8px)',
+                            transition: 'opacity 0.65s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                    >
+                        scroll
+                    </span>
+                    <span>↓</span>
+                    <span
+                        style={{
+                            fontSize: '0.66rem',
+                            letterSpacing: '0.34em',
+                            textTransform: 'uppercase',
+                            whiteSpace: 'nowrap',
+                            opacity: shouldRenderArrow && showScrollHint ? 0.82 : 0,
+                            transform: shouldRenderArrow && showScrollHint
+                                ? 'translateX(0)'
+                                : 'translateX(-8px)',
+                            transition: 'opacity 0.65s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+                        }}
+                    >
+                        down
+                    </span>
+                </span>
             </Link>
             <style jsx>{`
                 @keyframes arrowFloat {
