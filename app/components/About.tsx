@@ -1,24 +1,38 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import Image from 'next/image'
+import { urlFor } from '@/sanity/lib/image'
 
-export default function About() {
+interface AboutProps {
+    aboutImage: unknown | null
+}
+
+export default function About({ aboutImage }: AboutProps) {
     const [mounted, setMounted] = useState(false)
-    
+
     useEffect(() => {
-        setMounted(true)
+        const frame = window.requestAnimationFrame(() => {
+            setMounted(true)
+        })
+
+        return () => window.cancelAnimationFrame(frame)
     }, [])
 
+    const imageUrl = aboutImage
+        ? urlFor(aboutImage).width(1400).height(1800).fit('crop').quality(86).auto('format').url()
+        : null
+
     return (
-        <section 
+        <section
             className="w-full relative flex items-center justify-center overflow-hidden"
             style={{ minHeight: '100vh', padding: '12vh 5vw 10vh' }}
             data-cursor-scope
         >
             <div className="w-full max-w-[1600px] flex flex-col md:flex-row relative z-10">
-                
+
                 {/* Text Section - Left */}
-                <div 
+                <div
                     className="w-full md:w-[65%] z-20 flex flex-col justify-center relative pt-24 md:pt-0"
                     style={{
                         opacity: mounted ? 1 : 0,
@@ -48,11 +62,11 @@ export default function About() {
                         letterSpacing: '-0.02em',
                         whiteSpace: 'nowrap',
                     }}>
-                        lo sguardo<br />
+                        Pinoooo<br />
                         <span style={{ fontStyle: 'italic', color: 'var(--dust)', marginLeft: '1.2em' }}>
-                            come atto
+                            Bruuuuno
                         </span><br />
-                        <span style={{ marginLeft: '1.8em' }}>concettuale</span>
+                        <span style={{ marginLeft: '1.8em' }}>...Luciano</span>
                     </h1>
 
                     <div className="mt-16 md:mt-24 md:ml-32 max-w-[28rem] relative z-20 bg-transparent px-4 md:px-0">
@@ -62,10 +76,12 @@ export default function About() {
                             lineHeight: 2.1,
                             color: 'rgba(26,24,20,0.7)',
                         }}>
-                            Fotografa e titolare di un atelier di moda concettuale a Firenze. 
-                            Studio il confine tra la forma e il significato, tra ciò che è manifesto e il non-detto che abita al di fuori dell&apos;inquadratura.
-                            <br /><br />
-                            Ogni immagine è un&apos;interrogazione.
+                            Ginevra Zoe Giannelli, classe ’97, ha studiato Filosofia all’Università di Firenze e
+                            lavora come Digital Art Director presso l’indipendent store fiorentino Société
+                            Anonyme. La sua passione per la fotografia nasce durante il periodo Covid
+                            quando ha iniziato a scattare con una vecchia Minolta del padre.
+                            Appassionata di fotografia urbana e di paesaggio, si ritiene costantemente alla
+                            ricerca di ampi spazi da ritrarre e nei quali perdersi.
                         </p>
 
                         <div style={{ marginTop: '4rem', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
@@ -81,7 +97,7 @@ export default function About() {
                 </div>
 
                 {/* Image Section - Right */}
-                <div 
+                <div
                     className="absolute right-0 top-[5vh] md:top-1/2 md:-translate-y-1/2 w-[85%] md:w-[48%] h-[55vh] md:h-[85vh] z-0 overflow-hidden"
                     style={{
                         opacity: mounted ? 1 : 0,
@@ -95,10 +111,21 @@ export default function About() {
                         background: 'rgba(26,24,20,0.04)',
                         position: 'relative',
                     }}>
-                        <div className="absolute inset-0 flex items-center justify-center opacity-40 mix-blend-multiply">
-                            <span style={{ fontSize: '0.65rem', letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--dust)' }}>
-                                Portrait Placeholder
-                            </span>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-60 mix-blend-multiply">
+                            {imageUrl ? (
+                                <Image
+                                    src={imageUrl}
+                                    alt="Ritratto per la pagina About"
+                                    fill
+                                    priority
+                                    sizes="(min-width: 768px) 48vw, 85vw"
+                                    style={{ objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <span style={{ fontSize: '0.65rem', letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--dust)' }}>
+                                    Portrait Placeholder
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>

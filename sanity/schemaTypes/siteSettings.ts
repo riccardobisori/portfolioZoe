@@ -15,6 +15,13 @@ const siteSettings = {
             description: 'Immagine a tutto schermo nella homepage',
         },
         {
+            name: 'aboutImage',
+            title: 'Immagine About',
+            type: 'image',
+            options: { hotspot: true },
+            description: 'Ritratto o immagine editoriale per la pagina About',
+        },
+        {
             name: 'heroTitle',
             title: 'Titolo Hero',
             type: 'string',

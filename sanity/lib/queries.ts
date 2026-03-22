@@ -44,6 +44,7 @@ export const projectBySlugQuery = groq`
 export const siteSettingsQuery = groq`
   *[_type == "siteSettings"][0] {
     heroImage,
+    aboutImage,
     heroTitle,
     heroSubtitle,
   }
