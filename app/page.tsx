@@ -5,8 +5,11 @@ import Footer from './components/Footer'
 import HomeScrollReset from './components/HomeScrollReset'
 import { client } from '@/sanity/lib/client'
 import { siteSettingsQuery } from '@/sanity/lib/queries'
+import { unstable_noStore as noStore } from 'next/cache'
 
 export default async function Home() {
+  noStore()
+
   // Fetch parallelo — prende settings e works contemporaneamente
   const settings = await client.fetch(siteSettingsQuery)
 

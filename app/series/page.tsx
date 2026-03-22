@@ -4,8 +4,11 @@ import { enrichProjectsWithMedia } from '@/app/components/project-data'
 import type { SanityProject } from '@/app/components/project-types'
 import { client } from '@/sanity/lib/client'
 import { allProjectsQuery } from '@/sanity/lib/queries'
+import { unstable_noStore as noStore } from 'next/cache'
 
 export default async function SeriesPage() {
+  noStore()
+
   // Pagina Series: lavori autoriali/personali.
   const projects: SanityProject[] = await client.fetch(allProjectsQuery)
   const projectsWithMedia = enrichProjectsWithMedia(projects)
