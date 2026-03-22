@@ -185,14 +185,17 @@ const project = {
                         select: {
                             title: 'layoutType',
                             media: 'primaryImage',
+                            layoutType: 'layoutType',
                             side: 'side',
                         },
                         prepare({
                             title,
+                            layoutType,
                             media,
                             side,
                         }: {
                             title?: string
+                            layoutType?: string
                             media?: unknown
                             side?: string
                         }) {
@@ -201,7 +204,15 @@ const project = {
                                 detailLayoutOptions.map((option) => [option.value, option.title]),
                             ) as Record<string, string>
 
-                            const subtitle = side ? `Immagine a ${side === 'left' ? 'sinistra' : 'destra'}` : undefined
+                            const showsSideSubtitle = isLayout(
+                                {layoutType},
+                                'portraitWithText',
+                                'portraitWithZoom',
+                            )
+                            const subtitle =
+                                showsSideSubtitle && side
+                                    ? `Immagine a ${side === 'left' ? 'sinistra' : 'destra'}`
+                                    : undefined
 
                             return {
                                 title: titles[title ?? ''] ?? 'Riga editoriale',
