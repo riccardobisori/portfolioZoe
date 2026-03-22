@@ -43,11 +43,43 @@ export interface SanityProject {
     kind: 'work' | 'series'
     year: string
     description?: string | null
+    // Layout editoriale opzionale per la pagina dettaglio del progetto.
+    detailLayout?: ProjectDetailRow[] | null
+    // Gallery legacy usata come fallback se detailLayout non è compilato.
+    gallery?: SanityImage[] | null
     mainImage: {
         asset?: {
             _ref?: string
         }
     } | null
+}
+
+// Mantiene il tipo immagine minimo necessario per derivare URL e dimensioni.
+export interface SanityImage {
+    asset?: {
+        _ref?: string
+    }
+}
+
+// Descrive una singola riga editoriale del dettaglio progetto.
+export interface ProjectDetailRow {
+    _key?: string
+    layoutType:
+        | 'singlePortrait'
+        | 'doublePortrait'
+        | 'fullBleedLandscape'
+        | 'quadLandscape'
+        | 'portraitWithText'
+        | 'portraitWithZoom'
+    side?: 'left' | 'right' | null
+    text?: string | null
+    zoomScale?: number | null
+    zoomPositionX?: number | null
+    zoomPositionY?: number | null
+    primaryImage?: SanityImage | null
+    secondaryImage?: SanityImage | null
+    tertiaryImage?: SanityImage | null
+    quaternaryImage?: SanityImage | null
 }
 
 // Tipo arricchito lato app: aggiungiamo URL immagine pronta

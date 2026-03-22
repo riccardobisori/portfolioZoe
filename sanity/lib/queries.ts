@@ -23,7 +23,21 @@ export const projectBySlugQuery = groq`
     year,
     description,
     mainImage,
-    gallery
+    // Manteniamo sia la gallery storica sia il nuovo layout editoriale.
+    gallery,
+    detailLayout[]{
+      _key,
+      layoutType,
+      side,
+      text,
+      zoomScale,
+      zoomPositionX,
+      zoomPositionY,
+      primaryImage,
+      secondaryImage,
+      tertiaryImage,
+      quaternaryImage
+    }
   }
 `
 

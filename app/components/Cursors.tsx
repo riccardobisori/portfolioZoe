@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 
 const CLICKABLE_SELECTOR =
     'a, button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]'
 
 export default function Cursor() {
+    const pathname = usePathname()
     const cursorRef = useRef<HTMLDivElement>(null)
     const trailRef = useRef<HTMLDivElement>(null)
     const hintRef = useRef<HTMLDivElement>(null)
@@ -16,7 +18,10 @@ export default function Cursor() {
     const visibleRef = useRef(false)
     const rafRef = useRef<number>(0)
 
+    // Disattiva il cursore custom nello Studio Sanity per non sovrapporlo al cursore nativo.
     useEffect(() => {
+        if (pathname?.startsWith('/studio')) return
+
         const setCustomCursorVisible = (isVisible: boolean) => {
             visibleRef.current = isVisible
             if (cursorRef.current) {
@@ -106,7 +111,11 @@ export default function Cursor() {
             document.removeEventListener('mouseenter', onDocumentMouseEnter)
             cancelAnimationFrame(rafRef.current)
         }
-    }, [])
+    }, [pathname])
+
+    if (pathname?.startsWith('/studio')) {
+        return null
+    }
 
     if (typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches) {
         return null

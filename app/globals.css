@@ -76,12 +76,50 @@ body::-webkit-scrollbar,
   }
 }
 
-/* Nasconde il cursore di default su tutti gli elementi interattivi
-   così non dobbiamo ricordarci di aggiungere cursor: none ovunque */
-a,
-button,
-[role="button"] {
+/* Nasconde il cursore nativo solo nelle aree che usano il cursore custom. */
+[data-cursor-scope] a,
+[data-cursor-scope] button,
+[data-cursor-scope] [role="button"] {
   cursor: none;
+}
+
+/* Nello Studio Sanity lasciamo sempre il cursore nativo del browser. */
+.sanity-studio-shell {
+  cursor: default !important;
+}
+
+.sanity-studio-shell a,
+.sanity-studio-shell a *,
+.sanity-studio-shell button,
+.sanity-studio-shell button *,
+.sanity-studio-shell [role="button"],
+.sanity-studio-shell [role="button"] *,
+.sanity-studio-shell [data-as="button"],
+.sanity-studio-shell [data-as="button"] *,
+.sanity-studio-shell [data-as="a"],
+.sanity-studio-shell [data-as="a"] *,
+.sanity-studio-shell [data-ui="Button"],
+.sanity-studio-shell [data-ui="Button"] *,
+.sanity-studio-shell [data-ui="MenuButton"],
+.sanity-studio-shell [data-ui="MenuButton"] *,
+.sanity-studio-shell [data-ui="MenuItem"],
+.sanity-studio-shell [data-ui="MenuItem"] *,
+.sanity-studio-shell [data-ui="Tab"],
+.sanity-studio-shell [data-ui="Tab"] *,
+.sanity-studio-shell [data-ui="TreeItem__box"],
+.sanity-studio-shell [data-ui="TreeItem__box"] *,
+.sanity-studio-shell [data-ui="AutocompleteOption"],
+.sanity-studio-shell [data-ui="AutocompleteOption"] *,
+.sanity-studio-shell input[type="button"],
+.sanity-studio-shell input[type="submit"],
+.sanity-studio-shell input[type="reset"],
+.sanity-studio-shell summary,
+.sanity-studio-shell summary *,
+.sanity-studio-shell label[for],
+.sanity-studio-shell label[for] *,
+.sanity-studio-shell [aria-haspopup="true"],
+.sanity-studio-shell [aria-haspopup="true"] * {
+  cursor: pointer !important;
 }
 
 /* Footer link hover su versione scura */
@@ -103,8 +141,142 @@ button,
   justify-content: center;
 }
 
+.project-detail-editorial-gallery {
+  display: grid;
+  gap: clamp(18px, 2.8vw, 42px);
+  padding: 0 clamp(10px, 2vw, 22px) clamp(56px, 8vw, 112px);
+}
+
+.project-detail-row {
+  width: 100%;
+}
+
+.project-detail-row-single-portrait {
+  display: flex;
+  justify-content: center;
+}
+
+.project-detail-row-double-portrait {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 1.8vw, 24px);
+  align-items: start;
+}
+
+.project-detail-column-cell {
+  min-width: 0;
+}
+
+.project-detail-column-cell-center {
+  display: flex;
+  justify-content: center;
+}
+
+.project-detail-row-full-bleed {
+  display: flex;
+  justify-content: center;
+}
+
+.project-detail-row-full-bleed img {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.project-detail-row-quad {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 1.8vw, 24px);
+}
+
+.project-detail-quad-column {
+  display: grid;
+  gap: clamp(12px, 1.8vw, 24px);
+  align-content: start;
+}
+
+.project-detail-row-sidecar {
+  /* La colonna media resta leggermente più stretta per lasciare respirare testo e zoom. */
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(280px, 1fr);
+  gap: clamp(16px, 2.2vw, 30px);
+  align-items: stretch;
+}
+
+.project-detail-row-sidecar-reverse {
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 0.85fr);
+}
+
+.project-detail-row-sidecar-reverse .project-detail-sidecar-image {
+  order: 2;
+}
+
+.project-detail-row-sidecar-reverse .project-detail-text-panel,
+.project-detail-row-sidecar-reverse .project-detail-zoom-panel {
+  order: 1;
+}
+
+.project-detail-sidecar-image {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 0;
+}
+
+.project-detail-text-panel,
+.project-detail-zoom-panel {
+  min-height: clamp(360px, 42vw, 740px);
+  background: #fff;
+  border: 1px solid rgba(26, 24, 20, 0.08);
+}
+
+.project-detail-text-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(24px, 4vw, 52px);
+}
+
+.project-detail-text-panel p {
+  margin: 0;
+  max-width: 32rem;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  line-height: 1.85;
+  color: rgba(26, 24, 20, 0.76);
+  white-space: pre-wrap;
+  text-wrap: balance;
+}
+
+.project-detail-zoom-panel {
+  display: grid;
+  place-items: center;
+  padding: clamp(18px, 3vw, 30px);
+}
+
+.project-detail-zoom-frame {
+  position: relative;
+  width: min(100%, 24rem);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: rgba(26, 24, 20, 0.06);
+}
+
 @media (max-width: 720px) {
   .project-detail-gallery-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .project-detail-row-double-portrait,
+  .project-detail-row-quad,
+  .project-detail-row-sidecar,
+  .project-detail-row-sidecar-reverse {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-detail-row-sidecar-reverse .project-detail-sidecar-image,
+  .project-detail-row-sidecar-reverse .project-detail-text-panel,
+  .project-detail-row-sidecar-reverse .project-detail-zoom-panel {
+    order: initial;
   }
 }

@@ -1,34 +1,37 @@
 import Image from 'next/image'
 import Nav from '@/app/components/Nav'
 import { urlFor } from '@/sanity/lib/image'
-
-interface SanityImageAsset {
-  _ref?: string
-}
-
-interface SanityImage {
-  asset?: SanityImageAsset
-}
+import type { ProjectDetailRow, SanityImage } from './project-types'
 
 interface ProjectDetailLayoutProps {
   project: {
     title: string
     description?: string | null
     gallery?: SanityImage[] | null
+    detailLayout?: ProjectDetailRow[] | null
   }
 }
 
-interface GalleryImageItem {
+interface ImageMedia {
   id: string
-  image: SanityImage
   width: number
   height: number
   ratio: number
   url: string
-  layout: 'fullBleed' | 'column' | 'centeredPortrait'
 }
 
-// Estrae width/height dall'asset ref di Sanity per guidare il layout senza fetch extra.
+interface RenderRow {
+  id: string
+  layoutType: ProjectDetailRow['layoutType']
+  side?: 'left' | 'right'
+  text?: string | null
+  zoomScale?: number
+  zoomPositionX?: number
+  zoomPositionY?: number
+  images: ImageMedia[]
+}
+
+// Legge le dimensioni originali dal ref Sanity per evitare fetch metadata extra.
 function getImageDimensions(image?: SanityImage | null) {
   const imageRef = image?.asset?._ref
   if (!imageRef) return null
@@ -38,7 +41,6 @@ function getImageDimensions(image?: SanityImage | null) {
 
   const width = Number.parseInt(dimensionsMatch[1], 10)
   const height = Number.parseInt(dimensionsMatch[2], 10)
-
   if (!width || !height) return null
 
   return {
@@ -48,110 +50,266 @@ function getImageDimensions(image?: SanityImage | null) {
   }
 }
 
-// Normalizza la gallery in item pronti al render e assegna il layout in base al ratio.
-function mapGalleryImages(gallery?: SanityImage[] | null): GalleryImageItem[] {
-  const validImages = (gallery ?? []).flatMap((image, index) => {
-    const dimensions = getImageDimensions(image)
-    if (!dimensions) return []
+// Converte un'immagine Sanity in media pronta al render con URL ottimizzato.
+function getImageMedia(image?: SanityImage | null, id = 'image') {
+  const dimensions = getImageDimensions(image)
+  if (!dimensions || !image) return null
 
-    // I tagli più estremi meritano un trattamento dedicato per non sembrare compressi nella griglia.
-    const isLandscape = dimensions.ratio > 1.24
-    const isTallPortrait = dimensions.ratio < 0.72
-    const layout: GalleryImageItem['layout'] = isLandscape
-      ? 'fullBleed'
-      : isTallPortrait
-        ? 'centeredPortrait'
-        : 'column'
+  return {
+    id,
+    width: dimensions.width,
+    height: dimensions.height,
+    ratio: dimensions.ratio,
+    url: urlFor(image).width(2400).quality(88).auto('format').url(),
+  }
+}
+
+// Traduce il layout editoriale del CMS in righe renderizzabili e scarta quelle incomplete.
+function buildExplicitRows(detailLayout?: ProjectDetailRow[] | null): RenderRow[] {
+  return (detailLayout ?? []).flatMap((row, index) => {
+    const images = [
+      getImageMedia(row.primaryImage, `${row._key ?? index}-primary`),
+      getImageMedia(row.secondaryImage, `${row._key ?? index}-secondary`),
+      getImageMedia(row.tertiaryImage, `${row._key ?? index}-tertiary`),
+      getImageMedia(row.quaternaryImage, `${row._key ?? index}-quaternary`),
+    ].filter((image): image is ImageMedia => Boolean(image))
+
+    const minimumImagesByLayout: Record<ProjectDetailRow['layoutType'], number> = {
+      singlePortrait: 1,
+      doublePortrait: 2,
+      fullBleedLandscape: 1,
+      quadLandscape: 4,
+      portraitWithText: 1,
+      portraitWithZoom: 1,
+    }
+
+    if (images.length < minimumImagesByLayout[row.layoutType]) return []
 
     return [
       {
-        id: `${image.asset?._ref ?? 'gallery'}-${index}`,
-        image,
-        width: dimensions.width,
-        height: dimensions.height,
-        ratio: dimensions.ratio,
-        url: urlFor(image).width(2200).quality(88).auto('format').url(),
-        layout,
+        id: row._key ?? `detail-row-${index}`,
+        layoutType: row.layoutType,
+        side: row.side ?? 'left',
+        text: row.text ?? null,
+        zoomScale: row.zoomScale ?? 1.8,
+        zoomPositionX: row.zoomPositionX ?? 50,
+        zoomPositionY: row.zoomPositionY ?? 50,
+        images,
       },
     ]
   })
-
-  return validImages.map((item, index, items) => {
-    if (item.layout !== 'centeredPortrait') return item
-
-    // Evitiamo due portrait "hero" consecutivi: il secondo rientra nella colonna standard.
-    const previousIsCenteredPortrait = items[index - 1]?.layout === 'centeredPortrait'
-    return {
-      ...item,
-      layout: previousIsCenteredPortrait ? 'column' : 'centeredPortrait',
-    }
-  })
 }
 
-// Renderizza ogni immagine nel frame più adatto, mantenendo separata la variante portrait centrata.
-function GalleryImage({ item }: { item: GalleryImageItem }) {
-  if (item.layout === 'centeredPortrait') {
-    return (
-      <figure
-        className="project-detail-gallery-figure-centered"
-        style={{
-          margin: 0,
-        }}
-      >
+// Genera una sequenza sensata dalla gallery legacy quando il layout editoriale non esiste.
+function buildFallbackRows(gallery?: SanityImage[] | null): RenderRow[] {
+  const images = (gallery ?? [])
+    .map((image, index) => getImageMedia(image, `gallery-${index}`))
+    .filter((image): image is ImageMedia => Boolean(image))
+
+  const portraits = images.filter((image) => image.ratio < 1)
+  const landscapes = images.filter((image) => image.ratio >= 1)
+  const rows: RenderRow[] = []
+
+  while (portraits.length > 0 || landscapes.length > 0) {
+    if (landscapes.length >= 4) {
+      rows.push({
+        id: `fallback-quad-${rows.length}`,
+        layoutType: 'quadLandscape',
+        images: landscapes.splice(0, 4),
+      })
+      continue
+    }
+
+    if (portraits.length >= 2) {
+      rows.push({
+        id: `fallback-double-${rows.length}`,
+        layoutType: 'doublePortrait',
+        images: portraits.splice(0, 2),
+      })
+      continue
+    }
+
+    if (landscapes.length > 0) {
+      rows.push({
+        id: `fallback-landscape-${rows.length}`,
+        layoutType: 'fullBleedLandscape',
+        images: [landscapes.shift()!],
+      })
+      continue
+    }
+
+    rows.push({
+      id: `fallback-portrait-${rows.length}`,
+      layoutType: 'singlePortrait',
+      images: [portraits.shift()!],
+    })
+  }
+
+  return rows
+}
+
+// Renderizza un'immagine preservando il ratio e lasciando ai layout solo i limiti massimi.
+function EditorialImage({
+  image,
+  sizes,
+  className,
+  maxWidth,
+  maxHeight,
+}: {
+  image: ImageMedia
+  sizes: string
+  className?: string
+  maxWidth?: string
+  maxHeight?: string
+}) {
+  return (
+    <Image
+      className={className}
+      src={image.url}
+      alt=""
+      width={image.width}
+      height={image.height}
+      sizes={sizes}
+      style={{
+        width: 'auto',
+        height: 'auto',
+        maxWidth: maxWidth ?? '100%',
+        maxHeight,
+        display: 'block',
+        background: 'rgba(26,24,20,0.06)',
+      }}
+    />
+  )
+}
+
+// Mostra un dettaglio ritagliato della stessa immagine per il layout "verticale + zoom".
+function ZoomPanel({
+  image,
+  zoomScale = 1.8,
+  zoomPositionX = 50,
+  zoomPositionY = 50,
+}: {
+  image: ImageMedia
+  zoomScale?: number
+  zoomPositionX?: number
+  zoomPositionY?: number
+}) {
+  return (
+    <div className="project-detail-zoom-panel">
+      <div className="project-detail-zoom-frame">
         <Image
-          src={item.url}
+          src={image.url}
           alt=""
-          width={item.width}
-          height={item.height}
-          sizes="(min-width: 900px) 42vw, 86vw"
+          fill
+          sizes="(min-width: 900px) 24vw, 72vw"
           style={{
-            width: 'min(100%, 42rem)',
-            height: 'auto',
-            maxHeight: '92svh',
-            display: 'block',
+            objectFit: 'cover',
+            objectPosition: `${zoomPositionX}% ${zoomPositionY}%`,
+            transform: `scale(${zoomScale})`,
+            transformOrigin: `${zoomPositionX}% ${zoomPositionY}%`,
           }}
         />
-      </figure>
+      </div>
+    </div>
+  )
+}
+
+// Mantiene il pannello testuale volutamente arioso, come pausa tra i blocchi fotografici.
+function TextPanel({ text }: { text?: string | null }) {
+  return (
+    <div className="project-detail-text-panel">
+      <p>{text?.trim() || 'Testo editoriale del progetto.'}</p>
+    </div>
+  )
+}
+
+// Seleziona il pattern visuale corretto per ogni riga editoriale.
+function renderRow(row: RenderRow) {
+  if (row.layoutType === 'singlePortrait') {
+    return (
+      <section key={row.id} className="project-detail-row project-detail-row-single-portrait">
+        <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 36vw, 82vw" maxWidth="min(100%, 34rem)" maxHeight="90svh" />
+      </section>
+    )
+  }
+
+  if (row.layoutType === 'doublePortrait') {
+    return (
+      <section key={row.id} className="project-detail-row project-detail-row-double-portrait">
+        {row.images.slice(0, 2).map((image) => (
+          <div key={image.id} className="project-detail-column-cell project-detail-column-cell-center">
+            <EditorialImage image={image} sizes="(min-width: 900px) 32vw, 78vw" maxWidth="100%" maxHeight="88svh" />
+          </div>
+        ))}
+      </section>
+    )
+  }
+
+  if (row.layoutType === 'fullBleedLandscape') {
+    return (
+      <section key={row.id} className="project-detail-row project-detail-row-full-bleed">
+        <EditorialImage image={row.images[0]} sizes="100vw" maxWidth="100%" />
+      </section>
+    )
+  }
+
+  if (row.layoutType === 'quadLandscape') {
+    return (
+      <section key={row.id} className="project-detail-row project-detail-row-quad">
+        <div className="project-detail-quad-column">
+          {row.images.slice(0, 2).map((image) => (
+            <EditorialImage key={image.id} image={image} sizes="(min-width: 900px) 24vw, 82vw" maxWidth="100%" />
+          ))}
+        </div>
+        <div className="project-detail-quad-column">
+          {row.images.slice(2, 4).map((image) => (
+            <EditorialImage key={image.id} image={image} sizes="(min-width: 900px) 24vw, 82vw" maxWidth="100%" />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (row.layoutType === 'portraitWithText') {
+    return (
+      <section
+        key={row.id}
+        className={`project-detail-row project-detail-row-sidecar ${
+          row.side === 'right' ? 'project-detail-row-sidecar-reverse' : ''
+        }`}
+      >
+        <div className="project-detail-sidecar-image">
+          <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 34vw, 82vw" maxWidth="100%" maxHeight="88svh" />
+        </div>
+        <TextPanel text={row.text} />
+      </section>
     )
   }
 
   return (
-    <figure
-      className={item.layout === 'fullBleed' ? 'project-detail-gallery-figure-full' : undefined}
-      style={{
-        margin: 0,
-      }}
+    <section
+      key={row.id}
+      className={`project-detail-row project-detail-row-sidecar ${
+        row.side === 'right' ? 'project-detail-row-sidecar-reverse' : ''
+      }`}
     >
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          aspectRatio: `${item.width} / ${item.height}`,
-          overflow: 'hidden',
-          background: 'rgba(26,24,20,0.06)',
-        }}
-      >
-        <Image
-          src={item.url}
-          alt=""
-          fill
-          sizes={
-            item.layout === 'fullBleed'
-              ? '(min-width: 900px) 96vw, 100vw'
-              : '(min-width: 900px) 47vw, 100vw'
-          }
-          style={{
-            objectFit: 'cover',
-          }}
-        />
+      <div className="project-detail-sidecar-image">
+        <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 34vw, 82vw" maxWidth="100%" maxHeight="88svh" />
       </div>
-    </figure>
+      <ZoomPanel
+        image={row.images[0]}
+        zoomScale={row.zoomScale}
+        zoomPositionX={row.zoomPositionX}
+        zoomPositionY={row.zoomPositionY}
+      />
+    </section>
   )
 }
 
-// Compone l'header editoriale del progetto e la gallery con layout adattivo.
+// Compone hero del progetto e sequenza editoriale, con fallback automatico alla gallery storica.
 export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProps) {
-  const galleryItems = mapGalleryImages(project.gallery)
+  const detailRows = buildExplicitRows(project.detailLayout)
+  const rows = detailRows.length > 0 ? detailRows : buildFallbackRows(project.gallery)
 
   return (
     <main style={{ cursor: 'none', background: '#fff' }}>
@@ -209,25 +367,9 @@ export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProp
         </div>
       </section>
 
-      {galleryItems.length > 0 ? (
-        <section
-          style={{
-            paddingInline: 'clamp(10px, 2vw, 22px)',
-            paddingBottom: 'clamp(56px, 8vw, 112px)',
-          }}
-        >
-          <div
-            className="project-detail-gallery-grid"
-            style={{
-              display: 'grid',
-              gap: 'clamp(12px, 1.8vw, 24px)',
-              alignItems: 'start',
-            }}
-          >
-            {galleryItems.map((item) => (
-              <GalleryImage key={item.id} item={item} />
-            ))}
-          </div>
+      {rows.length > 0 ? (
+        <section className="project-detail-editorial-gallery">
+          {rows.map((row) => renderRow(row))}
         </section>
       ) : null}
     </main>
