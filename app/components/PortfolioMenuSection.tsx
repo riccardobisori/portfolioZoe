@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ProjectWithUrl } from './project-types'
 
 interface PortfolioMenuSectionProps {
@@ -21,13 +21,6 @@ function getProjectHref(project: ProjectWithUrl) {
   return isSeries ? `/series/${project.slug.current}` : `/works/${project.slug.current}`
 }
 
-// Manteniamo in un helper il testo descrittivo usato nell'overlay:
-// ci evita di duplicare il fallback e rende più semplice trasformarlo
-// in parole animate singolarmente dentro il render.
-function getProjectOverlayDescription(project: ProjectWithUrl) {
-  return project.description?.trim() || 'Open project details and full photo story.'
-}
-
 interface PortfolioMenuImageLinkProps {
   project: ProjectWithUrl
   imageColumn: '1' | '2'
@@ -39,7 +32,6 @@ function PortfolioMenuImageLink({ project, imageColumn }: PortfolioMenuImageLink
   const cardRef = useRef<HTMLDivElement | null>(null)
   const [isInView, setIsInView] = useState(false)
   const [showMobileText, setShowMobileText] = useState(false)
-  const overlayDescriptionWords = getProjectOverlayDescription(project).split(/\s+/)
 
   useEffect(() => {
     const node = cardRef.current
@@ -82,7 +74,7 @@ function PortfolioMenuImageLink({ project, imageColumn }: PortfolioMenuImageLink
         <div
           className="portfolioImageWrap portfolioImageWrapDesktop"
           style={{
-            // Desktop: manteniamo il crop quadrato e l'overlay hover descrittivo.
+            // Desktop: manteniamo il crop quadrato con un hover leggero.
             position: 'relative',
             aspectRatio: '1 / 1',
             overflow: 'hidden',
@@ -102,27 +94,6 @@ function PortfolioMenuImageLink({ project, imageColumn }: PortfolioMenuImageLink
               }}
             />
           )}
-          <div className="portfolioImageOverlay" aria-hidden="true">
-            <div className="portfolioImageOverlayInner">
-              <p className="portfolioImageOverlayDescription">
-                {overlayDescriptionWords.map((word, wordIndex) => (
-                  <span
-                    key={`${project._id}-word-${wordIndex}`}
-                    className="portfolioImageOverlayWord"
-                    style={
-                      {
-                        // Salviamo il delay in una custom property CSS:
-                        // verra usata solo durante l'animazione di entrata, non nel reset.
-                        '--word-delay': `${320 + wordIndex * 140}ms`,
-                      } as CSSProperties
-                    }
-                  >
-                    {word}
-                  </span>
-                ))}
-              </p>
-            </div>
-          </div>
         </div>
 
         {project.imageUrl && (
@@ -360,6 +331,9 @@ export default function PortfolioMenuSection({
           /* Crea uno stacking context locale:
              aiuta overlay e immagine a stratificarsi in modo prevedibile. */
           isolation: isolate;
+          transition:
+            transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+            box-shadow 420ms ease;
         }
 
         :global(.portfolioImageWrapMobile) {
@@ -406,128 +380,30 @@ export default function PortfolioMenuSection({
         }
 
         :global(.portfolioImage) {
-          /* L'immagine ha una transizione propria, separata dal testo:
-             questo permette zoom e correzione tonale senza rendere l'overlay "gommoso". */
+          /* L'immagine reagisce in modo lieve all'hover:
+             basta un piccolo zoom e una correzione tonale minima per far capire che e cliccabile. */
           transition:
             transform 700ms cubic-bezier(0.16, 1, 0.3, 1),
             filter 700ms cubic-bezier(0.16, 1, 0.3, 1);
           transform-origin: center center;
         }
 
-        :global(.portfolioImageOverlay) {
-          /* Overlay full-bleed ma centrato:
-             resta quasi invisibile a riposo e compare con un velo molto leggero
-             per non "spegnere" troppo la fotografia durante l'hover. */
-          position: absolute;
-          inset: 0;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: clamp(20px, 4vw, 42px);
-          background:
-            linear-gradient(180deg, rgba(13, 12, 10, 0.03) 0%, rgba(13, 12, 10, 0.12) 100%);
-          opacity: 0;
-          transition:
-            opacity 420ms ease,
-            background 420ms ease;
-          pointer-events: none;
-        }
-
-        :global(.portfolioImageOverlayInner) {
-          /* Il testo è centrato nel fotogramma.
-             Usiamo clip-path + lieve blur per un reveal più elegante di un "typewriter" puro,
-             che qui rischierebbe di sembrare troppo tecnico rispetto al tono fotografico. */
-          max-width: min(30rem, 100%);
-          text-align: center;
-          transform: translateY(12px) scale(0.985);
-          opacity: 0;
-          filter: blur(10px);
-          clip-path: inset(0 100% 0 0);
-          transition:
-            /* Reveal più lento con un piccolo delay:
-               prima si percepisce il cambio di stato dell'immagine,
-               poi la scritta entra con più calma e presenza. */
-            transform 1040ms cubic-bezier(0.16, 1, 0.3, 1) 120ms,
-            opacity 680ms ease 120ms,
-            filter 1040ms cubic-bezier(0.16, 1, 0.3, 1) 120ms,
-            clip-path 1220ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms;
-        }
-
-        :global(.portfolioImageOverlayDescription) {
-          margin: 0;
-          max-width: 26rem;
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 0.2em 0.32em;
-          font-size: clamp(1.05rem, 1.45vw, 1.3rem);
-          line-height: 1.55;
-          letter-spacing: -0.015em;
-          color: rgba(255, 251, 245, 0.98);
-          text-shadow: 0 1px 12px rgba(13, 12, 10, 0.18);
-        }
-
-        :global(.portfolioImageOverlayWord) {
-          /* Stato iniziale di ogni parola:
-             resta subito resettabile quando l'hover si interrompe. */
-          display: inline-block;
-          opacity: 0;
-          transform: translateY(0.42em);
-          filter: blur(6px);
-          will-change: opacity, transform, filter;
-        }
-
         /* Stato attivo sull'immagine:
            - hover reale sul wrapper fotografico
            - focus interno se in futuro si aggiungono elementi focusable
            - focus visibile della riga link per accessibilità tastiera */
+        :global(.portfolioImageWrap:hover),
+        :global(.portfolioImageWrap:focus-within),
+        :global(.portfolioRow:focus-visible .portfolioImageWrap) {
+          transform: translateY(-2px);
+          box-shadow: 0 18px 34px rgba(26, 24, 20, 0.12);
+        }
+
         :global(.portfolioImageWrap:hover .portfolioImage),
         :global(.portfolioImageWrap:focus-within .portfolioImage),
         :global(.portfolioRow:focus-visible .portfolioImage) {
-          transform: scale(1.02);
-          filter: saturate(0.97) contrast(0.99) brightness(0.93);
-        }
-
-        /* Fade-in del velo sopra la foto. */
-        :global(.portfolioImageWrap:hover .portfolioImageOverlay),
-        :global(.portfolioImageWrap:focus-within .portfolioImageOverlay),
-        :global(.portfolioRow:focus-visible .portfolioImageOverlay) {
-          opacity: 1;
-        }
-
-        /* Reveal del testo con movimento e rimozione del blur. */
-        :global(.portfolioImageWrap:hover .portfolioImageOverlayInner),
-        :global(.portfolioImageWrap:focus-within .portfolioImageOverlayInner),
-        :global(.portfolioRow:focus-visible .portfolioImageOverlayInner) {
-          transform: translateY(0) scale(1);
-          opacity: 1;
-          filter: blur(0);
-          clip-path: inset(0 0 0 0);
-        }
-
-        /* Una volta aperto l'overlay, le singole parole completano il reveal in sequenza. */
-        :global(.portfolioImageWrap:hover .portfolioImageOverlayWord),
-        :global(.portfolioImageWrap:focus-within .portfolioImageOverlayWord),
-        :global(.portfolioRow:focus-visible .portfolioImageOverlayWord) {
-          /* L'animazione parte solo nello stato attivo:
-             se il mouse esce, le parole tornano subito allo stato iniziale senza delay "sporchi". */
-          animation: portfolio-overlay-word-reveal 1280ms cubic-bezier(0.16, 1, 0.3, 1) both;
-          animation-delay: var(--word-delay);
-        }
-
-        @keyframes portfolio-overlay-word-reveal {
-          0% {
-            opacity: 0;
-            transform: translateY(0.42em);
-            filter: blur(6px);
-          }
-
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-            filter: blur(0);
-          }
+          transform: scale(1.018);
+          filter: saturate(1.02) brightness(0.98);
         }
 
         @media (max-width: 900px) {
@@ -565,18 +441,6 @@ export default function PortfolioMenuSection({
 
           :global(.portfolioImageWrapMobile) {
             display: block;
-          }
-
-          :global(.portfolioImageOverlay) {
-            display: none;
-          }
-
-          :global(.portfolioImageOverlayInner) {
-            display: none;
-          }
-
-          :global(.portfolioImageOverlayWord) {
-            animation: none !important;
           }
 
           :global(.portfolioImage) {
