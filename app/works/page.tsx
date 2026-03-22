@@ -1,3 +1,4 @@
+import Nav from '@/app/components/Nav'
 import PortfolioMenuSection from '@/app/components/PortfolioMenuSection'
 import { enrichProjectsWithMedia } from '@/app/components/project-data'
 import type { SanityProject } from '@/app/components/project-types'
@@ -12,6 +13,9 @@ export default async function WorksPage() {
 
     return (
         <main style={{ cursor: 'none' }}>
+            {/* Manteniamo la stessa navbar della home anche nella pagina indice dei lavori,
+                così la navigazione resta coerente tra overview e homepage. */}
+            <Nav />
             <PortfolioMenuSection
                 projects={worksOnly}
                 sectionId="works"

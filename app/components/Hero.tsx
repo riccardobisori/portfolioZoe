@@ -172,7 +172,7 @@ export default function Hero({ heroImage }: HeroProps) {
         // aspettiamo un attimo per farlo sembrare un invito secondario, piu elegante.
         const timeout = window.setTimeout(() => {
             setShowScrollHint(true)
-        }, 1400)
+        }, 3000)
 
         return () => window.clearTimeout(timeout)
     }, [shouldRenderArrow])

@@ -109,9 +109,10 @@ export default function Nav() {
           paddingRight: 'max(env(safe-area-inset-right, 0px), clamp(1.25rem, 4vw, 3.25rem))',
         }}
       >
-
-        {/* Logo — solo iniziali, bold, display font */}
-        <Link href="/" style={{ textDecoration: 'none' }}>
+        {/* Logo:
+            usiamo un anchor HTML normale invece di `next/link`,
+            cosi il click riporta sempre alla landing page con un reload reale. */}
+        <a href="/" style={{ textDecoration: 'none' }}>
           <span style={{
             fontFamily: 'var(--font-cormorant)',
             fontSize: '1.28rem',
@@ -123,7 +124,7 @@ export default function Nav() {
           }}>
             GZG
           </span>
-        </Link>
+        </a>
 
         {/* Link di navigazione — bianchi su hero scuro */}
         <ul className="hidden md:flex gap-10 list-none">

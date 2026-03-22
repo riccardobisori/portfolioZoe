@@ -1,3 +1,4 @@
+import Nav from '@/app/components/Nav'
 import PortfolioMenuSection from '@/app/components/PortfolioMenuSection'
 import { enrichProjectsWithMedia } from '@/app/components/project-data'
 import type { SanityProject } from '@/app/components/project-types'
@@ -12,6 +13,9 @@ export default async function SeriesPage() {
 
   return (
     <main style={{ cursor: 'none' }}>
+      {/* Anche nella pagina Series lasciamo visibile la navbar globale:
+          chi arriva qui deve poter tornare subito alle altre sezioni del sito. */}
+      <Nav />
       <PortfolioMenuSection
         projects={seriesOnly}
         sectionId="series"
