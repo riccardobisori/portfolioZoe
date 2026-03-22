@@ -69,7 +69,8 @@ body::-webkit-scrollbar,
   height: 0;
 }
 
-@media (hover: none), (pointer: coarse) {
+@media (hover: none),
+(pointer: coarse) {
   .home-page-shell {
     /* iOS/Android gestiscono male i background fixed durante lo scroll */
     background-attachment: scroll, scroll;
@@ -143,8 +144,8 @@ body::-webkit-scrollbar,
 
 .project-detail-editorial-gallery {
   display: grid;
-  gap: clamp(18px, 2.8vw, 42px);
-  padding: 0 clamp(10px, 2vw, 22px) clamp(56px, 8vw, 112px);
+  gap: clamp(48px, 8vw, 140px);
+  padding: clamp(24px, 4vw, 56px) clamp(16px, 3vw, 40px) clamp(100px, 12vw, 200px);
 }
 
 .project-detail-row {
@@ -154,13 +155,16 @@ body::-webkit-scrollbar,
 .project-detail-row-single-portrait {
   display: flex;
   justify-content: center;
+  padding-inline: 0;
 }
 
 .project-detail-row-double-portrait {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(12px, 1.8vw, 24px);
+  gap: clamp(18px, 2.5vw, 34px);
   align-items: start;
+  width: min(100%, 96rem);
+  margin-inline: auto;
 }
 
 .project-detail-column-cell {
@@ -185,25 +189,28 @@ body::-webkit-scrollbar,
 .project-detail-row-quad {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(12px, 1.8vw, 24px);
+  gap: clamp(18px, 2.5vw, 34px);
+  width: min(100%, 96rem);
+  margin-inline: auto;
 }
 
 .project-detail-quad-column {
   display: grid;
-  gap: clamp(12px, 1.8vw, 24px);
+  gap: clamp(18px, 2.5vw, 34px);
   align-content: start;
 }
 
 .project-detail-row-sidecar {
-  /* La colonna media resta leggermente più stretta per lasciare respirare testo e zoom. */
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(280px, 1fr);
-  gap: clamp(16px, 2.2vw, 30px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.5vw, 34px);
   align-items: stretch;
+  width: min(100%, 96rem);
+  margin-inline: auto;
 }
 
 .project-detail-row-sidecar-reverse {
-  grid-template-columns: minmax(280px, 1fr) minmax(0, 0.85fr);
+  /* Eredita la stessa identica griglia 1fr 1fr */
 }
 
 .project-detail-row-sidecar-reverse .project-detail-sidecar-image {
@@ -224,9 +231,9 @@ body::-webkit-scrollbar,
 
 .project-detail-text-panel,
 .project-detail-zoom-panel {
-  min-height: clamp(360px, 42vw, 740px);
-  background: #fff;
-  border: 1px solid rgba(26, 24, 20, 0.08);
+  min-height: clamp(420px, 42vw, 760px);
+  background: transparent;
+  border: none;
 }
 
 .project-detail-text-panel {
@@ -238,12 +245,13 @@ body::-webkit-scrollbar,
 
 .project-detail-text-panel p {
   margin: 0;
-  max-width: 32rem;
-  font-size: clamp(1rem, 1.5vw, 1.2rem);
-  line-height: 1.85;
-  color: rgba(26, 24, 20, 0.76);
+  max-width: 36rem;
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+  line-height: 1.6;
+  color: var(--ink);
   white-space: pre-wrap;
   text-wrap: balance;
+  font-style: italic;
 }
 
 .project-detail-zoom-panel {
@@ -254,8 +262,8 @@ body::-webkit-scrollbar,
 
 .project-detail-zoom-frame {
   position: relative;
-  width: min(100%, 24rem);
-  aspect-ratio: 4 / 5;
+  width: min(100%, 18rem);
+  aspect-ratio: 5 / 5;
   overflow: hidden;
   background: rgba(26, 24, 20, 0.06);
 }
@@ -267,11 +275,13 @@ body::-webkit-scrollbar,
 }
 
 @media (max-width: 900px) {
+
   .project-detail-row-double-portrait,
   .project-detail-row-quad,
   .project-detail-row-sidecar,
   .project-detail-row-sidecar-reverse {
     grid-template-columns: minmax(0, 1fr);
+    width: 100%;
   }
 
   .project-detail-row-sidecar-reverse .project-detail-sidecar-image,

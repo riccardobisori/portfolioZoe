@@ -228,7 +228,7 @@ function renderRow(row: RenderRow) {
   if (row.layoutType === 'singlePortrait') {
     return (
       <section key={row.id} className="project-detail-row project-detail-row-single-portrait">
-        <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 36vw, 82vw" maxWidth="min(100%, 34rem)" maxHeight="90svh" />
+        <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 46vw, 88vw" maxWidth="min(100%, 47rem)" />
       </section>
     )
   }
@@ -238,7 +238,7 @@ function renderRow(row: RenderRow) {
       <section key={row.id} className="project-detail-row project-detail-row-double-portrait">
         {row.images.slice(0, 2).map((image) => (
           <div key={image.id} className="project-detail-column-cell project-detail-column-cell-center">
-            <EditorialImage image={image} sizes="(min-width: 900px) 32vw, 78vw" maxWidth="100%" maxHeight="88svh" />
+            <EditorialImage image={image} sizes="(min-width: 900px) 46vw, 88vw" maxWidth="100%" />
           </div>
         ))}
       </section>
@@ -248,7 +248,7 @@ function renderRow(row: RenderRow) {
   if (row.layoutType === 'fullBleedLandscape') {
     return (
       <section key={row.id} className="project-detail-row project-detail-row-full-bleed">
-        <EditorialImage image={row.images[0]} sizes="100vw" maxWidth="100%" />
+        <EditorialImage image={row.images[0]} sizes="100vw" maxWidth="min(100%, 140rem)" />
       </section>
     )
   }
@@ -279,7 +279,7 @@ function renderRow(row: RenderRow) {
         }`}
       >
         <div className="project-detail-sidecar-image">
-          <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 34vw, 82vw" maxWidth="100%" maxHeight="88svh" />
+          <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 44vw, 88vw" maxWidth="100%" />
         </div>
         <TextPanel text={row.text} />
       </section>
@@ -294,7 +294,7 @@ function renderRow(row: RenderRow) {
       }`}
     >
       <div className="project-detail-sidecar-image">
-        <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 34vw, 82vw" maxWidth="100%" maxHeight="88svh" />
+        <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 44vw, 88vw" maxWidth="100%" />
       </div>
       <ZoomPanel
         image={row.images[0]}
@@ -312,7 +312,7 @@ export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProp
   const rows = detailRows.length > 0 ? detailRows : buildFallbackRows(project.gallery)
 
   return (
-    <main style={{ cursor: 'none', background: '#fff' }}>
+    <main className="paper-texture-surface" style={{ cursor: 'none' }}>
       <Nav />
 
       <section
