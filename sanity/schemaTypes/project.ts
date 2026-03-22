@@ -1,3 +1,5 @@
+import GalleryFolderInput from './components/GalleryFolderInput'
+
 // Schema di un singolo progetto fotografico.
 // Questo documento alimenta home preview, listing e pagina dettaglio.
 
@@ -12,6 +14,7 @@ const project = {
     title: 'Project',
     type: 'document',
 
+    // Raccoglie i campi editabili nello Studio per contenuti, media e metadati del progetto.
     fields: [
         {
             name: 'title',
@@ -42,10 +45,13 @@ const project = {
         },
         {
             // Galleria immagini aggiuntive per la pagina dettaglio.
-            // array di image — Sanity permette upload multiplo
+            // L'input custom aggiunge il caricamento rapido di immagini o cartelle intere.
             name: 'gallery',
             title: 'Galleria immagini',
             type: 'array',
+            components: {
+                input: GalleryFolderInput,
+            },
             of: [{ type: 'image', options: { hotspot: true } }],
         },
         {
