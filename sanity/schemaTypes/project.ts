@@ -118,6 +118,15 @@ const project = {
                             validation: (Rule: ValidationRule) => Rule.required(),
                         },
                         {
+                            name: 'zoomImage',
+                            title: 'Immagine riquadro zoom',
+                            type: 'image',
+                            description: 'Immagine dedicata al riquadro quadrato. Se la lasci vuota, viene usata l’immagine principale della riga.',
+                            components: {input: ProjectGalleryImageInput},
+                            options: { hotspot: true },
+                            hidden: ({ parent }: { parent?: { layoutType?: string } }) => !isLayout(parent, 'portraitWithZoom'),
+                        },
+                        {
                             name: 'secondaryImage',
                             title: 'Immagine 2',
                             type: 'image',

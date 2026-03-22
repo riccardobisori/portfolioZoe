@@ -28,6 +28,7 @@ interface RenderRow {
   zoomScale?: number
   zoomPositionX?: number
   zoomPositionY?: number
+  zoomImage?: ImageMedia | null
   images: ImageMedia[]
 }
 
@@ -94,6 +95,9 @@ function buildExplicitRows(detailLayout?: ProjectDetailRow[] | null): RenderRow[
         zoomScale: row.zoomScale ?? 1.8,
         zoomPositionX: row.zoomPositionX ?? 50,
         zoomPositionY: row.zoomPositionY ?? 50,
+        zoomImage:
+          getImageMedia(row.zoomImage, `${row._key ?? index}-zoom`) ??
+          getImageMedia(row.primaryImage, `${row._key ?? index}-zoom-fallback`),
         images,
       },
     ]
@@ -297,7 +301,7 @@ function renderRow(row: RenderRow) {
         <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 44vw, 88vw" maxWidth="100%" />
       </div>
       <ZoomPanel
-        image={row.images[0]}
+        image={row.zoomImage ?? row.images[0]}
         zoomScale={row.zoomScale}
         zoomPositionX={row.zoomPositionX}
         zoomPositionY={row.zoomPositionY}

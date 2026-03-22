@@ -77,6 +77,7 @@ export interface ProjectDetailRow {
     zoomPositionX?: number | null
     zoomPositionY?: number | null
     primaryImage?: SanityImage | null
+    zoomImage?: SanityImage | null
     secondaryImage?: SanityImage | null
     tertiaryImage?: SanityImage | null
     quaternaryImage?: SanityImage | null

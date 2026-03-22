@@ -34,6 +34,7 @@ export const projectBySlugQuery = groq`
       zoomPositionX,
       zoomPositionY,
       primaryImage,
+      zoomImage,
       secondaryImage,
       tertiaryImage,
       quaternaryImage
