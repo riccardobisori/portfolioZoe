@@ -1,18 +1,21 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState, type MouseEvent } from 'react'
 
 export default function Nav() {
   const navItems = [
     { label: 'Series', href: '/series' },
     { label: 'Works', href: '/works' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/#contact' },
   ]
+  const pathname = usePathname()
   const [heroLightPhase, setHeroLightPhase] = useState(false)
   const [isPastHero, setIsPastHero] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [pendingSectionId, setPendingSectionId] = useState<string | null>(null)
   const shouldUseLightNav = heroLightPhase && !isPastHero
   const navTextColor = shouldUseLightNav ? '#f7f4ef' : 'var(--ink)'
   const navBorderColor = shouldUseLightNav ? 'rgba(247, 244, 239, 0.42)' : 'rgba(26,24,20,0.2)'
@@ -73,16 +76,43 @@ export default function Nav() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  useEffect(() => {
+    if (mobileMenuOpen || !pendingSectionId) return
+
+    const scrollToPendingSection = () => {
+      const target = document.getElementById(pendingSectionId)
+      if (!target) return
+
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.history.replaceState(
+        null,
+        '',
+        `${window.location.pathname}${window.location.search}`
+      )
+      setPendingSectionId(null)
+    }
+
+    const timer = window.setTimeout(scrollToPendingSection, 40)
+    return () => window.clearTimeout(timer)
+  }, [mobileMenuOpen, pendingSectionId])
+
   const handleSectionClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
     setMobileMenuOpen(false)
 
-    if (!href.startsWith('#')) return
+    const hashIndex = href.indexOf('#')
+    if (hashIndex === -1 || pathname !== '/') return
 
-    const targetId = href.slice(1)
+    const targetId = href.slice(hashIndex + 1)
     const target = document.getElementById(targetId)
     if (!target) return
 
     event.preventDefault()
+
+    if (mobileMenuOpen) {
+      setPendingSectionId(targetId)
+      return
+    }
+
     target.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
     window.history.replaceState(

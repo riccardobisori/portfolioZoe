@@ -2,10 +2,12 @@ import Image from 'next/image'
 import Nav from '@/app/components/Nav'
 import { urlFor } from '@/sanity/lib/image'
 import type { ProjectDetailRow, SanityImage } from './project-types'
+import ProjectDetailMobileGallery from './ProjectDetailMobileGallery'
 
 interface ProjectDetailLayoutProps {
   project: {
     title: string
+    year?: string | null
     description?: string | null
     gallery?: SanityImage[] | null
     detailLayout?: ProjectDetailRow[] | null
@@ -25,9 +27,6 @@ interface RenderRow {
   layoutType: ProjectDetailRow['layoutType']
   side?: 'left' | 'right'
   text?: string | null
-  zoomScale?: number
-  zoomPositionX?: number
-  zoomPositionY?: number
   zoomImage?: ImageMedia | null
   images: ImageMedia[]
 }
@@ -92,9 +91,6 @@ function buildExplicitRows(detailLayout?: ProjectDetailRow[] | null): RenderRow[
         layoutType: row.layoutType,
         side: row.side ?? 'left',
         text: row.text ?? null,
-        zoomScale: row.zoomScale ?? 1.8,
-        zoomPositionX: row.zoomPositionX ?? 50,
-        zoomPositionY: row.zoomPositionY ?? 50,
         zoomImage:
           getImageMedia(row.zoomImage, `${row._key ?? index}-zoom`) ??
           getImageMedia(row.primaryImage, `${row._key ?? index}-zoom-fallback`),
@@ -186,18 +182,8 @@ function EditorialImage({
   )
 }
 
-// Mostra un dettaglio ritagliato della stessa immagine per il layout "verticale + zoom".
-function ZoomPanel({
-  image,
-  zoomScale = 1.8,
-  zoomPositionX = 50,
-  zoomPositionY = 50,
-}: {
-  image: ImageMedia
-  zoomScale?: number
-  zoomPositionX?: number
-  zoomPositionY?: number
-}) {
+// Mostra l'immagine scelta per il riquadro quadrato senza zoom aggiuntivo da CMS.
+function ZoomPanel({ image }: { image: ImageMedia }) {
   return (
     <div className="project-detail-zoom-panel">
       <div className="project-detail-zoom-frame">
@@ -207,10 +193,7 @@ function ZoomPanel({
           fill
           sizes="(min-width: 900px) 24vw, 72vw"
           style={{
-            objectFit: 'cover',
-            objectPosition: `${zoomPositionX}% ${zoomPositionY}%`,
-            transform: `scale(${zoomScale})`,
-            transformOrigin: `${zoomPositionX}% ${zoomPositionY}%`,
+            objectFit: 'contain',
           }}
         />
       </div>
@@ -300,20 +283,35 @@ function renderRow(row: RenderRow) {
       <div className="project-detail-sidecar-image">
         <EditorialImage image={row.images[0]} sizes="(min-width: 900px) 44vw, 88vw" maxWidth="100%" />
       </div>
-      <ZoomPanel
-        image={row.zoomImage ?? row.images[0]}
-        zoomScale={row.zoomScale}
-        zoomPositionX={row.zoomPositionX}
-        zoomPositionY={row.zoomPositionY}
-      />
+      <ZoomPanel image={row.zoomImage ?? row.images[0]} />
     </section>
   )
+}
+
+function buildMobileImages(rows: RenderRow[]) {
+  const images: ImageMedia[] = []
+
+  rows.forEach((row) => {
+    images.push(...row.images)
+
+    if (row.layoutType === 'portraitWithZoom' && row.zoomImage && row.zoomImage.url !== row.images[0]?.url) {
+      images.push(row.zoomImage)
+    }
+  })
+
+  const seenUrls = new Set<string>()
+  return images.filter((image) => {
+    if (seenUrls.has(image.url)) return false
+    seenUrls.add(image.url)
+    return true
+  })
 }
 
 // Compone hero del progetto e sequenza editoriale, con fallback automatico alla gallery storica.
 export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProps) {
   const detailRows = buildExplicitRows(project.detailLayout)
   const rows = detailRows.length > 0 ? detailRows : buildFallbackRows(project.gallery)
+  const mobileImages = buildMobileImages(rows)
 
   return (
     <main className="paper-texture-surface" style={{ cursor: 'none' }}>
@@ -321,13 +319,13 @@ export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProp
 
       <section
         style={{
-          minHeight: '52svh',
+          minHeight: 'clamp(18rem, 52svh, 32rem)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          paddingTop: 'clamp(112px, 14vw, 180px)',
-          paddingBottom: 'clamp(44px, 7vw, 72px)',
-          paddingInline: 'clamp(16px, 3vw, 28px)',
+          paddingTop: 'clamp(96px, 22vw, 180px)',
+          paddingBottom: 'clamp(28px, 7vw, 72px)',
+          paddingInline: 'clamp(12px, 4.5vw, 28px)',
           textAlign: 'center',
         }}
       >
@@ -344,12 +342,13 @@ export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProp
           <h1
             style={{
               margin: 0,
-              fontSize: 'clamp(3.9rem, 11vw, 9rem)',
-              lineHeight: 0.9,
-              letterSpacing: '-0.07em',
+              fontSize: 'clamp(2.8rem, 10vw, 9rem)',
+              lineHeight: 0.92,
+              letterSpacing: 'clamp(-0.05em, -0.5vw, -0.07em)',
               textTransform: 'uppercase',
               color: 'var(--ink)',
               fontWeight: 500,
+              textWrap: 'balance',
             }}
           >
             {project.title}
@@ -357,10 +356,10 @@ export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProp
           {project.description ? (
             <p
               style={{
-                margin: '1.35rem auto 0',
-                maxWidth: '38rem',
-                fontSize: 'clamp(0.98rem, 1.35vw, 1.08rem)',
-                lineHeight: 1.7,
+                margin: 'clamp(0.95rem, 4vw, 1.35rem) auto 0',
+                maxWidth: 'min(38rem, 100%)',
+                fontSize: 'clamp(0.9rem, 3.8vw, 1.08rem)',
+                lineHeight: 1.6,
                 color: 'rgba(26,24,20,0.7)',
                 textWrap: 'balance',
               }}
@@ -370,6 +369,10 @@ export default function ProjectDetailLayout({ project }: ProjectDetailLayoutProp
           ) : null}
         </div>
       </section>
+
+      {mobileImages.length > 0 ? (
+        <ProjectDetailMobileGallery images={mobileImages} />
+      ) : null}
 
       {rows.length > 0 ? (
         <section className="project-detail-editorial-gallery">

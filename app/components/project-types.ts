@@ -73,9 +73,6 @@ export interface ProjectDetailRow {
         | 'portraitWithZoom'
     side?: 'left' | 'right' | null
     text?: string | null
-    zoomScale?: number | null
-    zoomPositionX?: number | null
-    zoomPositionY?: number | null
     primaryImage?: SanityImage | null
     zoomImage?: SanityImage | null
     secondaryImage?: SanityImage | null

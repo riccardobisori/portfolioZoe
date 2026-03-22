@@ -1,130 +1,108 @@
 'use client'
 
+import React, { useEffect, useState } from 'react'
+
 export default function About() {
+    const [mounted, setMounted] = useState(false)
+    
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
     return (
-        // id="about" per il link nella Nav
-        // display grid diviso in due colonne uguali — immagine e testo
-        // Su mobile colonna singola, su desktop due colonne
-        <section
-            id="about"
-            className="grid grid-cols-1 md:grid-cols-2"
-            style={{ 
-                minHeight: '70vh',
-                background: 'var(--ink)', // sfondo scuro — contrasto con il resto del sito
-                overflow: 'hidden',
-            }}
+        <section 
+            className="w-full relative flex items-center justify-center overflow-hidden"
+            style={{ minHeight: '100vh', padding: '12vh 5vw 10vh' }}
+            data-cursor-scope
         >
-
-            {/* ── COLONNA SINISTRA — immagine ── */}
-            {/* Immagine — su mobile altezza fissa, su desktop altezza automatica */}
-            <div className="relative overflow-hidden h-72 md:h-auto">
-                {/*
-                    Placeholder scuro — sarà sostituito con un ritratto di Ginevra.
-                    Usiamo un gradiente più scuro rispetto agli altri placeholder
-                    perché siamo su sfondo ink (quasi nero)
-                */}
-                <div style={{
-                    width: '100%',
-                    height: '100%',
-                    minHeight: '500px',
-                    background: 'linear-gradient(170deg, #3a3530, #1a1814)',
-                }} />
-            </div>
-
-            {/* ── COLONNA DESTRA — testo ── */}
-            {/* Testo — padding ridotto su mobile */}
-            <div className="flex flex-col justify-center px-8 py-16 md:px-20 md:py-24">
-
-                {/* Etichetta piccola sopra il titolo — stile editoriale */}
-                <p style={{
-                    fontSize: '0.55rem',
-                    letterSpacing: '0.45em',
-                    textTransform: 'uppercase',
-                    color: 'var(--accent)', // oro/beige — risalta sullo sfondo scuro
-                    marginBottom: '2rem',
-                }}>
-                    Chi sono
-                </p>
-
-                {/* 
-                    Titolo principale in serif — font grande e leggero su sfondo scuro
-                    crea un effetto editoriale raffinato
-                */}
-                <h2 style={{
-                    fontFamily: 'var(--font-cormorant)',
-                    fontSize: 'clamp(1.8rem, 3vw, 2.8rem)',
-                    fontWeight: 300,
-                    lineHeight: 1.35,
-                    color: 'var(--cream)', // crema su sfondo scuro — leggibile e elegante
-                }}>
-                    Lo sguardo come<br />
-                    {/* em in corsivo con colore accent — spezza visivamente il titolo */}
-                    <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>
-                        atto concettuale
-                    </em>
-                </h2>
-
-                {/* Testo biografico — opacity bassa per gerarchia visiva */}
-                {/* Il testo è volutamente depotenziato — il titolo deve dominare */}
-                <p style={{
-                    marginTop: '2.5rem',
-                    fontSize: '0.65rem',
-                    letterSpacing: '0.12em',
-                    lineHeight: 2.2,
-                    // rgba con alpha 0.45 = testo molto tenue sullo sfondo scuro
-                    // crea gerarchia: titolo forte, corpo testo discreto
-                    color: 'rgba(244,240,235,0.45)',
-                    maxWidth: '40ch',
-                }}>
-                    Ginevra Zoe Giannelli è fotografa e titolare di un atelier
-                    di moda concettuale a Firenze. Il suo lavoro esplora il confine
-                    tra forma e significato, tra il visibile e ciò che rimane
-                    fuori campo. Ogni scatto è un&apos;interrogazione silenziosa.
-                </p>
-                {/*
-                    Nota: &apos; è l'entità HTML per l'apostrofo.
-                    In JSX le stringhe con apostrofi vanno escapate così
-                    per evitare conflitti con la sintassi JSX
-                */}
-
-                {/* Link "Leggi di più" con trattino animato */}
-                {/* 
-                    Non usiamo Link di Next.js perché /about non esiste ancora.
-                    Quando creeremo la pagina about, cambieremo questo in:
-                    <Link href="/about">
-                */}
-
-                <a href="#"
+            <div className="w-full max-w-[1600px] flex flex-col md:flex-row relative z-10">
+                
+                {/* Text Section - Left */}
+                <div 
+                    className="w-full md:w-[65%] z-20 flex flex-col justify-center relative pt-24 md:pt-0"
                     style={{
-                        marginTop: '3rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        fontSize: '0.6rem',
-                        letterSpacing: '0.35em',
-                        textTransform: 'uppercase',
-                        color: 'var(--cream)',
-                        textDecoration: 'none',
-                    }}
-                    // Hover: aumenta il gap per dare senso di movimento 
-                    onMouseEnter={e => {
-                        e.currentTarget.style.gap = '1.5rem'
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.gap = '1rem'
+                        opacity: mounted ? 1 : 0,
+                        transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+                        transition: 'opacity 1.2s ease-out 0.2s, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s',
                     }}
                 >
-                    Leggi di più
-                    {/* Trattino decorativo — usiamo un semplice span */}
-                    <span style={{
-                        display: 'block',
-                        width: '30px',
-                        height: '1px',
-                        background: 'var(--accent)',
-                    }} />
-                </a>
+                    <p style={{
+                        fontSize: '0.65rem',
+                        letterSpacing: '0.45em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(26,24,20,0.5)',
+                        marginBottom: 'clamp(2rem, 5vw, 4rem)',
+                        paddingLeft: 'clamp(0px, 2vw, 2rem)',
+                    }}>
+                        Ginevra Zoe Giannelli
+                    </p>
 
+                    <h1 style={{
+                        fontFamily: 'var(--font-cormorant)',
+                        fontSize: 'clamp(4.2rem, 10vw, 12rem)',
+                        fontWeight: 300,
+                        lineHeight: 0.85,
+                        color: 'var(--ink)',
+                        textTransform: 'lowercase',
+                        margin: 0,
+                        letterSpacing: '-0.02em',
+                        whiteSpace: 'nowrap',
+                    }}>
+                        lo sguardo<br />
+                        <span style={{ fontStyle: 'italic', color: 'var(--dust)', marginLeft: '1.2em' }}>
+                            come atto
+                        </span><br />
+                        <span style={{ marginLeft: '1.8em' }}>concettuale</span>
+                    </h1>
+
+                    <div className="mt-16 md:mt-24 md:ml-32 max-w-[28rem] relative z-20 bg-transparent px-4 md:px-0">
+                        <p style={{
+                            fontSize: '0.85rem',
+                            letterSpacing: '0.02em',
+                            lineHeight: 2.1,
+                            color: 'rgba(26,24,20,0.7)',
+                        }}>
+                            Fotografa e titolare di un atelier di moda concettuale a Firenze. 
+                            Studio il confine tra la forma e il significato, tra ciò che è manifesto e il non-detto che abita al di fuori dell&apos;inquadratura.
+                            <br /><br />
+                            Ogni immagine è un&apos;interrogazione.
+                        </p>
+
+                        <div style={{ marginTop: '4rem', display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                            <div style={{ width: '50px', height: '1px', background: 'var(--ink)' }}></div>
+                            <span style={{
+                                fontSize: '0.6rem',
+                                letterSpacing: '0.4em',
+                                textTransform: 'uppercase',
+                                color: 'var(--ink)',
+                            }}>Firenze, IT</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Image Section - Right */}
+                <div 
+                    className="absolute right-0 top-[5vh] md:top-1/2 md:-translate-y-1/2 w-[85%] md:w-[48%] h-[55vh] md:h-[85vh] z-0 overflow-hidden"
+                    style={{
+                        opacity: mounted ? 1 : 0,
+                        clipPath: mounted ? 'inset(0% 0% 0% 0%)' : 'inset(100% 0% 0% 0%)',
+                        transition: 'opacity 1.5s ease-out 0.4s, clip-path 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s',
+                    }}
+                >
+                    <div style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'rgba(26,24,20,0.04)',
+                        position: 'relative',
+                    }}>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-40 mix-blend-multiply">
+                            <span style={{ fontSize: '0.65rem', letterSpacing: '0.4em', textTransform: 'uppercase', color: 'var(--dust)' }}>
+                                Portrait Placeholder
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </section >
+        </section>
     )
 }

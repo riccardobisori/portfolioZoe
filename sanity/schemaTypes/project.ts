@@ -162,33 +162,6 @@ const project = {
                             rows: 5,
                             hidden: ({ parent }: { parent?: { layoutType?: string } }) => !isLayout(parent, 'portraitWithText'),
                         },
-                        {
-                            name: 'zoomScale',
-                            title: 'Intensita zoom',
-                            type: 'number',
-                            description: '1 = nessuno zoom, 3 = zoom molto stretto.',
-                            initialValue: 1.8,
-                            validation: (Rule: ValidationRule) => Rule.min(1).max(3),
-                            hidden: ({ parent }: { parent?: { layoutType?: string } }) => !isLayout(parent, 'portraitWithZoom'),
-                        },
-                        {
-                            name: 'zoomPositionX',
-                            title: 'Zoom focus X (%)',
-                            type: 'number',
-                            description: 'Controlla il punto focale orizzontale del riquadro zoom.',
-                            initialValue: 50,
-                            validation: (Rule: ValidationRule) => Rule.min(0).max(100),
-                            hidden: ({ parent }: { parent?: { layoutType?: string } }) => !isLayout(parent, 'portraitWithZoom'),
-                        },
-                        {
-                            name: 'zoomPositionY',
-                            title: 'Zoom focus Y (%)',
-                            type: 'number',
-                            description: 'Controlla il punto focale verticale del riquadro zoom.',
-                            initialValue: 50,
-                            validation: (Rule: ValidationRule) => Rule.min(0).max(100),
-                            hidden: ({ parent }: { parent?: { layoutType?: string } }) => !isLayout(parent, 'portraitWithZoom'),
-                        },
                     ],
                     preview: {
                         select: {

@@ -35,7 +35,10 @@ html {
 body {
   color: var(--ink);
   overflow-x: hidden;
-  background-color: #fff;
+  background-color: var(--paper-base);
+  background-image: var(--paper-texture-image);
+  background-size: var(--paper-texture-size);
+  background-repeat: var(--paper-texture-repeat);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -144,8 +147,13 @@ body::-webkit-scrollbar,
 
 .project-detail-editorial-gallery {
   display: grid;
-  gap: clamp(48px, 8vw, 140px);
+  gap: clamp(28px, 5vw, 72px);
   padding: clamp(24px, 4vw, 56px) clamp(16px, 3vw, 40px) clamp(100px, 12vw, 200px);
+}
+
+.project-detail-mobile-gallery {
+  display: none;
+  padding-bottom: clamp(72px, 10vw, 120px);
 }
 
 .project-detail-row {
@@ -275,6 +283,13 @@ body::-webkit-scrollbar,
 }
 
 @media (max-width: 900px) {
+  .project-detail-mobile-gallery {
+    display: block;
+  }
+
+  .project-detail-editorial-gallery {
+    display: none;
+  }
 
   .project-detail-row-double-portrait,
   .project-detail-row-quad,
