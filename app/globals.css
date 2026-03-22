@@ -18,6 +18,11 @@
   --accent: #c8b89a;
   --paper: #ede9e3;
   --paper-base: #f3eee6;
+  --paper-texture-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(243, 236, 226, 0.06) 100%),
+    url('/textures/paper-texture.jpg');
+  --paper-texture-size: 100% 100%, 420px auto;
+  --paper-texture-repeat: no-repeat, repeat;
 }
 
 html {
@@ -30,16 +35,25 @@ html {
 body {
   color: var(--ink);
   overflow-x: hidden;
-  background-color: var(--paper-base);
-  /* Texture reale da file + velatura chiara per mantenerla elegante e leggibile. */
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(243, 236, 226, 0.06) 100%),
-    url('/textures/paper-texture.jpg');
-  background-size: 100% 100%, 420px auto;
-  background-repeat: no-repeat, repeat;
-  background-attachment: fixed, fixed;
+  background-color: #fff;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.home-page-shell {
+  background-color: var(--paper-base);
+  /* Texture reale da file + velatura chiara per mantenerla elegante e leggibile. */
+  background-image: var(--paper-texture-image);
+  background-size: var(--paper-texture-size);
+  background-repeat: var(--paper-texture-repeat);
+  background-attachment: fixed, fixed;
+}
+
+.paper-texture-surface {
+  background-color: var(--paper-base);
+  background-image: var(--paper-texture-image);
+  background-size: var(--paper-texture-size);
+  background-repeat: var(--paper-texture-repeat);
 }
 
 * {
@@ -56,7 +70,7 @@ body::-webkit-scrollbar,
 }
 
 @media (hover: none), (pointer: coarse) {
-  body {
+  .home-page-shell {
     /* iOS/Android gestiscono male i background fixed durante lo scroll */
     background-attachment: scroll, scroll;
   }
@@ -73,4 +87,24 @@ button,
 /* Footer link hover su versione scura */
 .site-footer a:hover {
   color: var(--cream) !important;
+}
+
+.project-detail-gallery-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.project-detail-gallery-figure-full,
+.project-detail-gallery-figure-centered {
+  grid-column: 1 / -1;
+}
+
+.project-detail-gallery-figure-centered {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 720px) {
+  .project-detail-gallery-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

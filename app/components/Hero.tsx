@@ -263,14 +263,9 @@ export default function Hero({ heroImage }: HeroProps) {
                 top: 0,
                 bottom: 0,
                 width: curtainWidth,
-                backgroundColor: 'var(--paper-base)',
-                backgroundImage:
-                    "linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(243, 236, 226, 0.06) 100%), url('/textures/paper-texture.jpg')",
-                backgroundSize: '100% 100%, 420px auto',
-                backgroundRepeat: 'no-repeat, repeat',
                 zIndex: 2,
                 pointerEvents: 'none',
-            }} className="hidden md:block" />
+            }} className="paper-texture-surface hidden md:block" />
 
             {/* Contenuto testuale sopra tutto: resta sempre sopra anche durante espansione */}
             <div style={{

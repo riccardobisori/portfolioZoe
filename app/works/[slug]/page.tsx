@@ -1,3 +1,4 @@
+import ProjectDetailLayout from '@/app/components/ProjectDetailLayout'
 import { client } from '@/sanity/lib/client'
 import { projectBySlugQuery } from '@/sanity/lib/queries'
 
@@ -8,12 +9,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
 
     if (!project) return <div>Lavoro non trovato</div>
 
-    return (
-        <main>
-            <h1>{project.title}</h1>
-            {/* il design viene dopo */}
-        </main>
-    )
+    return <ProjectDetailLayout project={project} />
 }
 
 // generateMetadata — stesso fix: params va awaittato

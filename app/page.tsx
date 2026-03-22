@@ -13,7 +13,7 @@ export default async function Home() {
   return (
     <>
       <HomeScrollReset />
-      <main style={{ cursor: 'none' }}>
+      <main className="home-page-shell" style={{ cursor: 'none' }}>
         <Nav />
         {/* Passiamo l'immagine hero a Hero come prop */}
         <Hero heroImage={settings?.heroImage ?? null} />

@@ -1,3 +1,4 @@
+import ProjectDetailLayout from '@/app/components/ProjectDetailLayout'
 import { client } from '@/sanity/lib/client'
 import { projectBySlugQuery } from '@/sanity/lib/queries'
 
@@ -7,11 +8,7 @@ export default async function SeriesDetailPage({ params }: { params: Promise<{ s
 
     if (!project) return <div>Serie non trovata</div>
 
-    return (
-        <main>
-            <h1>{project.title}</h1>
-        </main>
-    )
+    return <ProjectDetailLayout project={project} />
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {

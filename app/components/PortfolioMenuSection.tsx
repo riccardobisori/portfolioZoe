@@ -170,12 +170,10 @@ export default function PortfolioMenuSection({
       data-cursor-scope
       style={{
         // La sezione occupa tutta la larghezza disponibile.
-        // Gli spazi verticali sono fluidi per mantenere respiro
-        // sia su viewport grandi sia su laptop più compatti.
+        // Manteniamo solo il respiro finale: l'offset superiore
+        // è gestito dall'header con gli stessi valori del detail project.
         width: '100%',
-        paddingTop: 'clamp(96px, 10vw, 144px)',
         paddingBottom: 'clamp(56px, 8vw, 112px)',
-        background: '#f5f1ea',
       }}
     >
       <header
@@ -188,23 +186,22 @@ export default function PortfolioMenuSection({
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: 'clamp(28px, 5vw, 56px)',
-          padding: '0 clamp(16px, 3vw, 28px)',
+          paddingTop: 'clamp(112px, 14vw, 180px)',
+          paddingBottom: 'clamp(44px, 7vw, 72px)',
+          paddingInline: 'clamp(16px, 3vw, 28px)',
           textAlign: 'center',
         }}
       >
-        <div style={{ maxWidth: '58rem' }}>
-          <p
-            style={{
-              margin: 0,
-              marginBottom: '0.95rem',
-              fontSize: '0.7rem',
-              letterSpacing: '0.28em',
-              textTransform: 'uppercase',
-              color: 'rgba(26,24,20,0.52)',
-            }}
-          >
-            Menu
-          </p>
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '58rem',
+            marginInline: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
           <h1
             style={{
               margin: 0,
